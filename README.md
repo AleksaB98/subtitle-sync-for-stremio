@@ -24,8 +24,8 @@ More: [Stremio subtitles out of sync? Why it happens and how to fix it](https://
 
 ## What it does
 
-1. Looks for subtitles in your languages on Titlovi.com, OpenSubtitles, SubDL and SubSource,
-   each with your own account or key.
+1. Looks for subtitles in your languages on OpenSubtitles, which every install has, and on
+   Titlovi.com, SubDL and SubSource if you add them, each with your own account or key.
 2. Takes a timing reference for your copy of the film or episode.
 3. Compares each subtitle's dialogue with it and re-times it: a fixed gap, a different speed,
    or a different cut.
@@ -50,8 +50,9 @@ More: [Stremio subtitles out of sync? Why it happens and how to fix it](https://
 Setup takes about five minutes on a guided page, in English or Serbian:
 
 1. Pick your subtitle languages, in order.
-2. Pick where subtitles come from, and paste your own free keys (OpenSubtitles, SubDL,
-   SubSource) or your Titlovi.com addon link.
+2. Add your OpenSubtitles account: its API key, username and password (required, free).
+   Optionally add Titlovi.com (paid: a yearly supporter donation to Titlovi.com), SubDL or
+   SubSource (free, each with its own key).
 3. Say whether you use a debrid service, and paste your stream addon's link if you use TorBox.
 4. Install in Stremio with one click (or copy the link).
 5. Set Stremio's default subtitle language, so the top subtitle turns on by itself.
