@@ -3,6 +3,7 @@
 Every change to Subtitle Sync for Stremio that people can notice, newest first. The same
 list, in English and Serbian: https://subtitlesync.stream/changelog
 
+- **2026-09-29** The FAQ says more exactly what the server records: the video file's size and hash, the numbers of the subtitles offered, and how well each one lined up.
 - **2026-09-29** MP4 videos: the subtitles inside them are now read too, so subtitles can be lined up with the video itself, as with MKV.
 - **2026-09-29** More subtitles sync: one with far fewer lines than the video's own subtitles now lines up too, and every OpenSubtitles result is looked at, not only the first fifty.
 - **2026-09-29** A reload no longer loses your setup: the step you were on, your choices and your keys come back. They are kept only in that browser tab and are gone when you close it, or at once with "Start over".
