@@ -3,6 +3,7 @@
 Every change to Subtitle Sync for Stremio that people can notice, newest first. The same
 list, in English and Serbian: https://subtitlesync.stream/changelog
 
+- **2026-09-29** The setup page now says when your stream addon also gives Stremio subtitles of its own (AIOStreams can), which are not synced, and where to switch them off.
 - **2026-09-29** Every box you paste into now has Paste and Show buttons, the stream addon link and the OpenSubtitles login too. The stream addon link is hidden while you type it.
 - **2026-09-29** The FAQ says more exactly what the server records: the video file's size and hash, the numbers of the subtitles offered, and how well each one lined up.
 - **2026-09-29** MP4 videos: the subtitles inside them are now read too, so subtitles can be lined up with the video itself, as with MKV.
