@@ -3,7 +3,7 @@
 **Subtitles in your language, timed to the exact video you are playing.**
 
 Subtitle Sync for Stremio is a free Stremio addon. It finds subtitles in Serbian, Croatian,
-Bosnian or any other language on Titlovi.com, OpenSubtitles, SubDL and SubSource, and lines
+Bosnian or any other language on Titlovi.com, OpenSubtitles, SubDL, SubSource and Subs.ro, and lines
 them up with the exact video you are playing, before the subtitle menu opens. The one that
 lines up goes on top of the menu.
 
@@ -25,7 +25,7 @@ More: [Stremio subtitles out of sync? Why it happens and how to fix it](https://
 ## What it does
 
 1. Looks for subtitles in your languages on OpenSubtitles, which every install has, and on
-   Titlovi.com, SubDL and SubSource if you add them, each with your own account or key.
+   Titlovi.com, SubDL, SubSource and, for Romanian, Subs.ro if you add them, each with your own account or key.
 2. Takes a timing reference for your copy of the film or episode.
 3. Compares each subtitle's dialogue with it and re-times it: a fixed gap, a different speed,
    or a different cut.
@@ -52,8 +52,8 @@ Setup takes about five minutes on a guided page, in English or Serbian:
 
 1. Pick your subtitle languages, in order.
 2. Add your OpenSubtitles account: its API key, username and password (required, free).
-   Optionally add Titlovi.com (paid: a yearly supporter donation to Titlovi.com), SubDL or
-   SubSource (free, each with its own key).
+   Optionally add Titlovi.com (paid: a yearly supporter donation to Titlovi.com), SubDL,
+   SubSource or, for Romanian, Subs.ro (free, each with its own key).
 3. Say whether you use a debrid service. With TorBox, paste your TorBox API key (the
    simplest way: the addon then finds your video in your own TorBox account, whichever
    stream addon you play from); your stream addon's link works too and is optional.
@@ -74,4 +74,4 @@ The addon is free and has no ads. Its server runs on donations: https://ko-fi.co
 ---
 
 Subtitle Sync for Stremio is an independent project. It is not made by or connected to
-Stremio, Titlovi.com, OpenSubtitles, SubDL, SubSource or any stream addon.
+Stremio, Titlovi.com, OpenSubtitles, SubDL, SubSource, Subs.ro or any stream addon.
