@@ -44,6 +44,7 @@ More: [Stremio subtitles out of sync? Why it happens and how to fix it](https://
 - It never hosts or links videos. It handles subtitles only.
 - It does not translate subtitles. It finds ones people wrote in your language and fixes their timing.
 - It cannot re-time a subtitle when there is nothing to compare it with; the menu then says so.
+- It cannot help in an app that tells subtitle addons nothing about the video file (no name, size or fingerprint). Stremio sends them on every device and Nuvio sends the fingerprint; in an app that sends nothing, every subtitle comes untimed and the list says so. Only that app's developers can change it.
 
 ## Setting it up
 
