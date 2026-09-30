@@ -3,6 +3,9 @@
 Every change to Subtitle Sync for Stremio that people can notice, newest first. The same
 list, in English and Serbian: https://subtitlesync.stream/changelog
 
+- **2026-09-30** Films and series opened from catalogs built on TMDB now get subtitles too. Stremio names them by their TMDB number, which the addon did not read, so their subtitle lists were empty.
+- **2026-09-30** Episode subtitles named like "S01 EP06" or "S01 E09" are now recognised as that one episode. Before, they were taken for a whole season and offered for every episode, where they failed to open.
+- **2026-09-30** When no subtitle exists in your language for a video, the list now says so in one row, instead of staying empty.
 - **2026-09-30** More videos played through TorBox now get subtitles timed from the video itself. TorBox serves files from seven web addresses, and the addon knew only two of them; files on the others were skipped.
 - **2026-09-30** Some apps send an out-of-date fingerprint of the video file. When the file's name and exact size match, the addon now reads the file anyway, and no longer marks subtitles made for that other fingerprint as made for your file.
 - **2026-09-30** When your app does not say which video file is playing, the subtitle list now ends with a row that explains why its subtitles cannot be synced. An install with no subtitle site set up now shows one row that says how to add OpenSubtitles, instead of an empty list.
