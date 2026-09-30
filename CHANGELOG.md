@@ -3,6 +3,7 @@
 Every change to Subtitle Sync for Stremio that people can notice, newest first. The same
 list, in English and Serbian: https://subtitlesync.stream/changelog
 
+- **2026-09-30** When your OpenSubtitles downloads for the day are used up, the list now puts subtitles from your other sites first, and one row at the end says when OpenSubtitles comes back. The message in the player names only the sites you have.
 - **2026-09-30** Stremio Web and the TV apps show the first subtitle list they get, made before Stremio knows your video file's fingerprint. Subtitles picked from it are now lined up with what the second list finds by that fingerprint, instead of served untimed.
 - **2026-09-30** SubDL season packs that come as RAR archives now work: you get the episode you are watching. A subtitle file that still cannot be opened now says so in the player, instead of showing nothing.
 - **2026-09-30** An app that adds the addon without its setup now shows one subtitle that says where to set it up, instead of nothing.
