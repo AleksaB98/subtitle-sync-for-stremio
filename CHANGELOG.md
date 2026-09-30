@@ -3,6 +3,12 @@
 Every change to Subtitle Sync for Stremio that people can notice, newest first. The same
 list, in English and Serbian: https://subtitlesync.stream/changelog
 
+- **2026-09-30** TorBox users can now paste their TorBox API key on the timing step instead of a stream addon link. With the key, the addon finds the video you are playing in your own TorBox account, whichever stream addon you play from, and reads its subtitle track for perfect timing. Nothing is added to or removed from your account. The stream addon link still works and is now optional.
+- **2026-09-30** Stremio asks for a video's subtitles twice: at once, then again a few seconds later once it knows the file's fingerprint, and its web app shows the first list only. The first list is now held up to six seconds for the second request, so it already carries the subtitles made for your exact file.
+- **2026-09-30** The line timings of a subtitle used as a timing reference are now kept on the server (the times only, never the words). A reference downloaded once by anyone costs nobody a download again, works when your OpenSubtitles downloads for the day are used up, and is not lost when the server restarts.
+- **2026-09-30** Every subtitle list now ends with a 👍 row: pick it after a subtitle that fits, and Subtitle Sync notes it for the next person who plays that video. Your subtitle carries on as it was.
+- **2026-09-30** When none of your subtitle sites has anything in your language for a video, the list now offers the English subtitles instead, each marked "English (no … found)", timed like any other. One list in eight was empty before.
+- **2026-09-30** A subtitle made for a copy like your file (the same kind of source, by another group) is now marked 🟠 Likely in sync: a copy like yours, and is used to time the other subtitles when nothing closer exists. Checked against the video's own track, such subtitles were already in sync as often as ones made for the very same release (about three times in four).
 - **2026-09-30** Films and series opened from catalogs built on TMDB now get subtitles too. Stremio names them by their TMDB number, which the addon did not read, so their subtitle lists were empty.
 - **2026-09-30** Episode subtitles named like "S01 EP06" or "S01 E09" are now recognised as that one episode. Before, they were taken for a whole season and offered for every episode, where they failed to open.
 - **2026-09-30** When no subtitle exists in your language for a video, the list now says so in one row, instead of staying empty.
