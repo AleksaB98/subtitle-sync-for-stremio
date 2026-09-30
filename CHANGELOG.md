@@ -3,6 +3,7 @@
 Every change to Subtitle Sync for Stremio that people can notice, newest first. The same
 list, in English and Serbian: https://subtitlesync.stream/changelog
 
+- **2026-09-30** Stremio Web and the TV apps show the first subtitle list they get, made before Stremio knows your video file's fingerprint. Subtitles picked from it are now lined up with what the second list finds by that fingerprint, instead of served untimed.
 - **2026-09-30** SubDL season packs that come as RAR archives now work: you get the episode you are watching. A subtitle file that still cannot be opened now says so in the player, instead of showing nothing.
 - **2026-09-30** An app that adds the addon without its setup now shows one subtitle that says where to set it up, instead of nothing.
 - **2026-09-29** The setup page now says when your stream addon also gives Stremio subtitles of its own (AIOStreams can), which are not synced, and where to switch them off.
