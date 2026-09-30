@@ -3,6 +3,8 @@
 Every change to Subtitle Sync for Stremio that people can notice, newest first. The same
 list, in English and Serbian: https://subtitlesync.stream/changelog
 
+- **2026-09-30** Subtitles whose lines are held long or merged (many Arabic translations, for example) now sync: the matching judges a shift a third way, by where each line starts, which does not care how long the lines are. Measured on real files that were refused before; unrelated films stay refused.
+- **2026-09-30** A subtitle in your own language made for the same release as your file now serves as the timing reference for the other subtitles of that language, not only an English one. For a dubbed release it is often the only one that exists. The list downloads nothing extra for it.
 - **2026-09-30** When nothing can line a subtitle up (no stream addon, a web stream), the list is now ordered by how alike your file each subtitle's release is: the same source and group first, a CAM copy last. A subtitle made for the same release as your file is marked 🟠 Same release as your file and comes before the ⚠️ Not synced ones. Before, such lists were ordered by download count, and the first subtitle was in sync about one time in three.
 - **2026-09-30** A video file is now recognised by its fingerprint alone. Some stream addons announce a file size a few percent off the real one, and Stremio passes that size on; until now it stopped the addon from reading the subtitle track inside the file.
 - **2026-09-30** When your OpenSubtitles downloads for the day are used up, the list now puts subtitles from your other sites first, and one row at the end says when OpenSubtitles comes back. The message in the player names only the sites you have.
