@@ -1,7 +1,6 @@
 # What's new
 
-Every change to Subtitle Sync for Stremio that people can notice, newest first. The same
-list, in English and Serbian: https://subtitlesync.stream/changelog
+Every change to Subtitle Sync for Stremio that people can notice, newest first.
 
 - **2026-10-01** Fixes from a day of plays. Subs.ro works again: its site had started turning this server's requests away, which showed as “key not accepted”. With a TorBox key, a file added to your account since its last listing is now found, and a file the app names its own way is found by its exact size. Anime files whose subtitle track carries songs and signs in with the dialogue now sync to the video: only the dialogue is used as the timing. The first subtitle list no longer waits for a second request from an app that never sends one, or when the app named no file. A subtitle upload with nothing in it but a read-me is left out of the list once someone has picked it, and an archive packed inside an archive is opened.
 - **2026-10-01** Subtitles come faster. The subtitle list now answers by its deadline even when it waited for Stremio’s second request, so no app gives up on it; when you pick a subtitle, its file and the OpenSubtitles file it is lined up with are downloaded at the same time, and a subtitle the list already lined up is served as it was, without lining it up again. Reading the video’s own subtitle track takes fewer requests to TorBox, and a stream addon’s play link is followed over one connection.

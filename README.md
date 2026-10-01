@@ -66,7 +66,7 @@ Setup takes about five minutes on a guided page, in English or Serbian:
 ## Questions and help
 
 - Frequently asked questions and a contact form: https://subtitlesync.stream/help
-- What changed and when: [CHANGELOG.md](CHANGELOG.md) · https://subtitlesync.stream/changelog
+- What changed and when: [CHANGELOG.md](CHANGELOG.md)
 
 ## Support
 
