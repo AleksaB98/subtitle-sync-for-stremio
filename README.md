@@ -54,9 +54,10 @@ Setup takes about five minutes on a guided page, in English or Serbian:
 2. Add your OpenSubtitles account: its API key, username and password (required, free).
    Optionally add Titlovi.com (paid: a yearly supporter donation to Titlovi.com), SubDL,
    SubSource or, for Romanian, Subs.ro (free, each with its own key).
-3. Say whether you use a debrid service. With TorBox, paste your TorBox API key (the
-   simplest way: the addon then finds your video in your own TorBox account, whichever
-   stream addon you play from); your stream addon's link works too and is optional.
+3. Say whether you use a debrid service (this answer is needed; the step says what each
+   answer gets). With TorBox, paste your TorBox API key (the simplest way: the addon then
+   finds your video in your own TorBox account, whichever stream addon you play from); your
+   stream addon's link works too and is optional.
 4. Install in Stremio with one click (or copy the link).
 5. Set Stremio's default subtitle language, so the top subtitle turns on by itself.
 
