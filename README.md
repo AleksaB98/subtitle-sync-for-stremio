@@ -56,8 +56,8 @@ Setup takes about five minutes on a guided page, in English or Serbian:
    SubSource or, for Romanian, Subs.ro (free, each with its own key).
 3. Say whether you use a debrid service (this answer is needed; the step says what each
    answer gets). With TorBox, paste your TorBox API key (the simplest way: the addon then
-   finds your video in your own TorBox account, whichever stream addon you play from); your
-   stream addon's link works too and is optional.
+   finds your video in your own TorBox account, whichever stream addon you play from) or
+   your stream addon's link: one of the two is needed to install.
 4. Install in Stremio with one click (or copy the link).
 5. Set Stremio's default subtitle language, so the top subtitle turns on by itself.
 
