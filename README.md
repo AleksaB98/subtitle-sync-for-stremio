@@ -31,7 +31,7 @@ More: [Stremio subtitles out of sync? Why it happens and how to fix it](https://
    or a different cut.
 4. Shows in Stremio's subtitle menu how each subtitle was timed, so you know what you pick.
 
-Prefer a shorter menu? Under Advanced on the setup page, "Show in the menu" lets you choose one
+Prefer a shorter menu? Under Advanced on the setup page, "The subtitle menu" lets you choose one
 subtitle per language, the best one found, instead of all of them. If it cannot be lined up when
 you pick it, the next best is tried for you, up to three more. Where nothing can be compared with
 your video, all of them are still shown, so you can try another by eye.
