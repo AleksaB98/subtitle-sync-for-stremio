@@ -7,7 +7,11 @@ playing, using the video's own subtitle track when it can. It is a free Stremio 
 from OpenSubtitles, and from Titlovi.com, SubDL, SubSource and Subs.ro if you add them, and are lined
 up before the subtitle menu opens. The one that lines up goes on top of the menu.
 
-**Set it up: https://subtitlesync.stream** (English) · **https://subtitlesync.stream/sr/** (srpski)
+**Set it up: https://subtitlesync.stream** (English) · **https://subtitlesync.stream/sr/** (srpski) · **https://subtitlesync.stream/pt-br/** (português)
+
+> **Em português:** o Subtitle Sync para Stremio encontra legendas no seu idioma e as sincroniza com o
+> arquivo exato que você está assistindo, usando a legenda embutida no próprio vídeo quando possível.
+> Legenda atrasada ou adiantada? Veja [por que acontece e como sincronizar](https://subtitlesync.stream/pt-br/legenda-atrasada-stremio).
 
 ![Subtitle Sync for Stremio](pictures/preview-en.png)
 
