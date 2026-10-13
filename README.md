@@ -2,10 +2,10 @@
 
 **Subtitles in your language, timed to the exact video you are playing.**
 
-Subtitle Sync for Stremio is a free Stremio addon. It finds subtitles in Serbian, Croatian,
-Bosnian or any other language on Titlovi.com, OpenSubtitles, SubDL, SubSource and Subs.ro, and lines
-them up with the exact video you are playing, before the subtitle menu opens. The one that
-lines up goes on top of the menu.
+Subtitle Sync for Stremio finds subtitles in your language and times them to the exact file you are
+playing, using the video's own subtitle track when it can. It is a free Stremio addon: subtitles come
+from OpenSubtitles, and from Titlovi.com, SubDL, SubSource and Subs.ro if you add them, and are lined
+up before the subtitle menu opens. The one that lines up goes on top of the menu.
 
 **Set it up: https://subtitlesync.stream** (English) · **https://subtitlesync.stream/sr/** (srpski)
 
@@ -46,10 +46,14 @@ your video, all of them are still shown, so you can try another by eye.
 
 ## What it does not do
 
-- It never hosts or links videos. It handles subtitles only.
+- It never hosts, finds or links videos. It handles subtitles only.
+- It never reads your files on Real-Debrid, AllDebrid, Premiumize or Debrid-Link: their rules forbid
+  it. With those services the timing comes from OpenSubtitles.
+- It needs your own free OpenSubtitles account (an API key and your login).
+- There is nothing to host or install on a computer: you add one link to Stremio.
 - It does not translate subtitles. It finds ones people wrote in your language and fixes their timing.
 - It cannot re-time a subtitle when there is nothing to compare it with; the menu then says so.
-- It cannot help in an app that tells subtitle addons nothing about the video file (no name, size or fingerprint). Stremio sends them on every device and Nuvio’s TV app sends the fingerprint (its phone app sends nothing); in an app that sends nothing, every subtitle comes untimed and the list says so. Only that app's developers can change it.
+- It cannot help in an app that tells subtitle addons nothing about the video file (no name, size or fingerprint). Stremio sends them on every device and Nuvio’s TV app sends the fingerprint (its phone app sends nothing); in an app that sends nothing, every subtitle comes untimed and the list says so. Only that app's developers can change it. Details: [which apps get synced subtitles](https://subtitlesync.stream/stremio-apps-synced-subtitles).
 
 ## Setting it up
 
