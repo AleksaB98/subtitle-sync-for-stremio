@@ -79,6 +79,7 @@ Setup takes about five minutes on a guided page, in English or Serbian:
 ## Questions and help
 
 - Frequently asked questions and a contact form: https://subtitlesync.stream/help
+- Questions, ideas and news in public: [r/SubtitleSync](https://www.reddit.com/r/SubtitleSync/) on Reddit. Add your support code to your post, and never post your install link: it holds your keys.
 - What changed and when: [CHANGELOG.md](CHANGELOG.md)
 
 ## Support
