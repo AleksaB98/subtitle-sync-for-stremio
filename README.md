@@ -55,7 +55,9 @@ your video, all of them are still shown, so you can try another by eye.
   it. With those services the timing comes from OpenSubtitles.
 - It needs your own free OpenSubtitles account (an API key and your login).
 - There is nothing to host or install on a computer: you add one link to Stremio.
-- It does not translate subtitles. It finds ones people wrote in your language and fixes their timing.
+- It does not write subtitles of its own: it finds ones people wrote in your language and fixes their timing.
+  Only when none exists, and only with your own free Gemini key, it also offers the English one translated
+  by machine (opt-in, on step 2 of the setup page).
 - It cannot re-time a subtitle when there is nothing to compare it with; the menu then says so.
 - It cannot help in an app that tells subtitle addons nothing about the video file (no name, size or fingerprint). Stremio sends them on every device and Nuvio’s TV app sends the fingerprint (its phone app sends nothing); in an app that sends nothing, every subtitle comes untimed and the list says so. Only that app's developers can change it. Details: [which apps get synced subtitles](https://subtitlesync.stream/stremio-apps-synced-subtitles).
 
