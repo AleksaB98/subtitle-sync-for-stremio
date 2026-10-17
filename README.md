@@ -56,7 +56,7 @@ your video, all of them are still shown, so you can try another by eye.
 - It needs your own free OpenSubtitles account (an API key and your login).
 - There is nothing to host or install on a computer: you add one link to Stremio.
 - It does not write subtitles of its own: it finds ones people wrote in your language and fixes their timing.
-  Only when none exists, it also offers one translated by machine from another language (the film's original
+  Only when none exists in any of your languages, it also offers one translated by machine into your first language from another language (the film's original
   language first, it translates best, else English): made once with somebody's own free Gemini key (opt-in, on
   step 2 of the setup page), then kept for everyone with the same subtitle.
 - It cannot re-time a subtitle when there is nothing to compare it with; the menu then says so.
