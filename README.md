@@ -1,17 +1,21 @@
 # Subtitle Sync for Stremio
 
-**Subtitles in your language, timed to the exact video you are playing.**
+**Subtitles in your language, timed to the exact video you are playing, and translated by AI when none exist.**
 
 Subtitle Sync for Stremio finds subtitles in your language and times them to the exact file you are
 playing, using the video's own subtitle track when it can. It is a free Stremio addon: subtitles come
 from OpenSubtitles, and from Titlovi.com, SubDL, SubSource, Subs.ro and AltyaziDB if you add them, and are lined
-up before the subtitle menu opens. The one that lines up goes on top of the menu.
+up before the subtitle menu opens. The one that lines up goes on top of the menu. When no subtitle exists in
+any of your languages, it translates one with AI, free with your own Google Gemini key (no card), timed the
+same way and kept for everyone: [free AI subtitles for Stremio](https://subtitlesync.stream/stremio-ai-subtitles).
 
 **Set it up: https://subtitlesync.stream** (English) · **https://subtitlesync.stream/sr/** (srpski) · **https://subtitlesync.stream/pt-br/** (português)
 
 > **Em português:** o Subtitle Sync para Stremio encontra legendas no seu idioma e as sincroniza com o
 > arquivo exato que você está assistindo, usando a legenda embutida no próprio vídeo quando possível.
 > Legenda atrasada ou adiantada? Veja [por que acontece e como sincronizar](https://subtitlesync.stream/pt-br/legenda-atrasada-stremio).
+> Sem legenda em português? Ele traduz uma com IA, grátis, com a sua própria chave do Gemini:
+> [legendas traduzidas com IA](https://subtitlesync.stream/pt-br/legendas-traduzidas-com-ia).
 
 ![Subtitle Sync for Stremio](pictures/preview-en.png)
 
@@ -34,6 +38,10 @@ More: [Stremio subtitles out of sync? Why it happens and how to fix it](https://
 3. Compares each subtitle's dialogue with it and re-times it: a fixed gap, a different speed,
    or a different cut.
 4. Shows in Stremio's subtitle menu how each subtitle was timed, so you know what you pick.
+5. When none of your languages has a subtitle, translates one with AI (Google Gemini, your own free key) from
+   the subtitle that translates best: one made for your file, a nearly identical language, the film's original
+   language, then English. More: [free AI subtitles for Stremio](https://subtitlesync.stream/stremio-ai-subtitles)
+   ([srpski](https://subtitlesync.stream/sr/prevod-titlova-na-srpski), [português](https://subtitlesync.stream/pt-br/legendas-traduzidas-com-ia)).
 
 Prefer a shorter menu? Under Advanced on the setup page, "The subtitle menu" lets you choose one
 subtitle per language, the best one found, instead of all of them. If it cannot be lined up when
