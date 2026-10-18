@@ -44,8 +44,8 @@ your video, all of them are still shown, so you can try another by eye.
 
 | Where your video is | What the timing is lined up with |
 |---|---|
-| TorBox | The video itself: its own subtitle track, read through the stream addon you already use, when the file has one. Otherwise as below. |
-| Real-Debrid, AllDebrid, Premiumize, Debrid-Link | These services forbid using your account from a server or from two places at once, so this addon never reads your file there. Your subtitles are lined up using OpenSubtitles instead, which works for most popular films. |
+| TorBox | The video itself: its own subtitle track, read through your TorBox key or the stream addon you already use, when the file has one. Otherwise as below. |
+| Real-Debrid, AllDebrid, Premiumize, Debrid-Link | These services forbid using your account from a server or from two places at once, so this addon never reads your file there. Your subtitles are lined up using OpenSubtitles instead, which works for most popular films, unless someone already played the very same file through TorBox: its timing is then used for you too. |
 | No debrid service | OpenSubtitles, as above. |
 
 ## What it does not do
@@ -56,21 +56,23 @@ your video, all of them are still shown, so you can try another by eye.
 - It needs your own free OpenSubtitles account (an API key and your login).
 - There is nothing to host or install on a computer: you add one link to Stremio.
 - It does not write subtitles of its own: it finds ones people wrote in your language and fixes their timing.
-  Only when none exists in any of your languages, it also offers one translated by machine into your first language from another language (the film's original
+  Only when none exists in any of your languages, it also offers one translated by machine into your first language from another language (a very close language or the film's original
   language first, it translates best, else English): made once with somebody's own free Gemini key (opt-in, on
   step 2 of the setup page), then kept for everyone with the same subtitle. When no site has any subtitle for the
-  video at all and the video file has a subtitle track of its own, that track is translated instead, timed to the video.
+  video at all and the video file has a subtitle track of its own, that track is translated instead, timed to the video
+  (with TorBox: your TorBox key or stream addon link).
 - It cannot re-time a subtitle when there is nothing to compare it with; the menu then says so.
-- It cannot help in an app that tells subtitle addons nothing about the video file (no name, size or fingerprint). Stremio sends them on every device and Nuvio’s TV app sends the fingerprint (its phone app sends nothing); in an app that sends nothing, every subtitle comes untimed and the list says so. Only that app's developers can change it. Details: [which apps get synced subtitles](https://subtitlesync.stream/stremio-apps-synced-subtitles).
+- It cannot help in an app that tells subtitle addons nothing about the video file (no name, size or fingerprint). Stremio sends them on every device and Nuvio’s Android TV app sends the fingerprint (its phone app sends nothing, its LG TV app often nothing); in an app that sends nothing, every subtitle comes untimed and the list says so. Only that app's developers can change it. Details: [which apps get synced subtitles](https://subtitlesync.stream/stremio-apps-synced-subtitles).
 
 ## Setting it up
 
-Setup takes about five minutes on a guided page, in English or Serbian:
+Setup takes 5 to 15 minutes on a guided page, in English, Serbian or Portuguese (Brazil):
 
 1. Pick your subtitle languages, in order.
 2. Add your OpenSubtitles account: its API key, username and password (required, free).
    Optionally add Titlovi.com (paid: a yearly supporter donation to Titlovi.com), SubDL,
-   SubSource or, for Romanian, Subs.ro and, for Turkish, AltyaziDB (free, each with its own key).
+   SubSource or, for Romanian, Subs.ro and, for Turkish, AltyaziDB (free, each with its own key),
+   and a free Gemini key for machine translations.
 3. Say whether you use a debrid service (this answer is needed; the step says what each
    answer gets). With TorBox, paste your TorBox API key (the simplest way: the addon then
    finds your video in your own TorBox account, whichever stream addon you play from) or
