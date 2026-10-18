@@ -58,7 +58,8 @@ your video, all of them are still shown, so you can try another by eye.
 - It does not write subtitles of its own: it finds ones people wrote in your language and fixes their timing.
   Only when none exists in any of your languages, it also offers one translated by machine into your first language from another language (the film's original
   language first, it translates best, else English): made once with somebody's own free Gemini key (opt-in, on
-  step 2 of the setup page), then kept for everyone with the same subtitle.
+  step 2 of the setup page), then kept for everyone with the same subtitle. When no site has any subtitle for the
+  video at all and the video file has a subtitle track of its own, that track is translated instead, timed to the video.
 - It cannot re-time a subtitle when there is nothing to compare it with; the menu then says so.
 - It cannot help in an app that tells subtitle addons nothing about the video file (no name, size or fingerprint). Stremio sends them on every device and Nuvio’s TV app sends the fingerprint (its phone app sends nothing); in an app that sends nothing, every subtitle comes untimed and the list says so. Only that app's developers can change it. Details: [which apps get synced subtitles](https://subtitlesync.stream/stremio-apps-synced-subtitles).
 
