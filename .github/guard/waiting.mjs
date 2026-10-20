@@ -44,9 +44,11 @@ async function main() {
   console.log(`${lines.length} waiting`);
   // Started by hand with "test": one line, so the webhook is seen to work.
   const test = process.env.WEBHOOK_TEST === "true";
-  if ((lines.length === 0 && !test) || !process.env.MOD_ALERTS_WEBHOOK) return;
+  // A secret pasted from Windows may carry a byte-order mark or a line end.
+  const hook = (process.env.MOD_ALERTS_WEBHOOK ?? "").replace(/^﻿/, "").trim();
+  if ((lines.length === 0 && !test) || !hook) return;
   const content = lines.length ? [HEADING, ...lines].join("\n") : "GitHub waiting list: the webhook works (a test; nothing waits).";
-  const sent = await fetch(process.env.MOD_ALERTS_WEBHOOK, {
+  const sent = await fetch(hook, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ content: content.slice(0, 2000), allowed_mentions: { parse: [] } }),
