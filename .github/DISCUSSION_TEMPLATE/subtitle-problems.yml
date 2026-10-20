@@ -2,9 +2,11 @@ body:
   - type: markdown
     attributes:
       value: |
+        **Subtitle problems: it is installed, but the subtitles are not right.** Post here if Subtitle Sync is installed (you have a support code) and, in the player, subtitles come too early or too late, drift, are missing or not in your language, a translated subtitle stays on "translating", or the player shows a message from Subtitle Sync.
+        **Not here:** you can't finish the setup, or you are changing settings: use **Setup help**.
+        Examples: "Everything is 2 seconds late in The Office S02E03", "No Serbian subtitles for Dune, only English", "The player says my OpenSubtitles downloads are used up"
         **Never paste your install link or any key here.** Anyone could use your accounts with it. A post that has one is removed by itself.
         Your support code is all I need: in Stremio, open Addons, find Subtitle Sync and press its gear (Configure). The code is at the top. Copy it right before you post: a new key or link gives a new code.
-        Something private? Write from the setup page instead: https://subtitlesync.stream/help#contact
   - type: checkboxes
     id: searched
     attributes:
@@ -17,6 +19,8 @@ body:
     attributes:
       label: Support code
       placeholder: 1A2B-3C4D-5E6F
+    validations:
+      required: true
   - type: input
     id: app
     attributes:
@@ -29,11 +33,18 @@ body:
     attributes:
       label: Film or episode
       placeholder: "The film's name, or the show with season and episode"
-  - type: textarea
-    id: question
+    validations:
+      required: true
+  - type: input
+    id: when
     attributes:
-      label: Your question
-      description: What you tried and what you saw. A screenshot helps.
+      label: When it happened
+      placeholder: "Today around 21:00, your time"
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Which subtitle row you picked, what you expected and what you saw (out of sync by how much, a message in the player, nothing listed). A screenshot, or the subtitle file that misbehaves, helps.
     validations:
       required: true
   - type: checkboxes

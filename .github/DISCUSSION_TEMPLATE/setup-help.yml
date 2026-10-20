@@ -1,0 +1,55 @@
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Setup help: before Subtitle Sync works.** Post here if you are setting it up or changing its settings: the setup page won't let you go on, a key or login is "not accepted", you don't know which option to choose, Install did nothing in Stremio, you have no support code yet, or a question before you install.
+        **Not here:** it is installed, but the subtitles are late, missing or in the wrong language: use **Subtitle problems**.
+        Examples: "OpenSubtitles says my API key is not accepted", "Which option do I pick in step 3 if I use Real-Debrid?", "Does it work on an LG TV?"
+        **Never paste your install link or any key here.** Anyone could use your accounts with it. A post that has one is removed by itself.
+        Something private? Write from the setup page instead: https://subtitlesync.stream/help#contact
+  - type: checkboxes
+    id: searched
+    attributes:
+      label: Looked first
+      options:
+        - label: I looked for an existing discussion about this first (the search box above the list).
+          required: true
+  - type: dropdown
+    id: step
+    attributes:
+      label: Where you are stuck
+      options:
+        - "Before installing: a question"
+        - "Step 1: which subtitles (languages)"
+        - "Step 2: subtitle sources, keys and logins"
+        - "Step 3: perfect timing"
+        - "Step 4: check and install"
+        - "Step 5: finish in Stremio"
+        - "Changing settings after installing"
+    validations:
+      required: true
+  - type: input
+    id: app
+    attributes:
+      label: App and device
+      placeholder: Stremio on an Android TV box, Stremio Web in Chrome, ...
+  - type: input
+    id: code
+    attributes:
+      label: Support code, if you have one
+      description: "You get it once installed: in Stremio, Addons > Subtitle Sync > gear (Configure). It is at the top."
+      placeholder: 1A2B-3C4D-5E6F
+  - type: textarea
+    id: question
+    attributes:
+      label: What is happening
+      description: What you did and what you saw, or your question. A screenshot helps.
+    validations:
+      required: true
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Rules
+      options:
+        - label: My post has no install link or key, and no links to videos or to sites for getting them ([the rules](https://github.com/AleksaB98/subtitle-sync-for-stremio/blob/main/CODE_OF_CONDUCT.md)).
+          required: true
