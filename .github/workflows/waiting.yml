@@ -1,0 +1,27 @@
+name: Waiting for an answer
+
+on:
+  schedule:
+    - cron: "15 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  discussions: read
+
+jobs:
+  waiting:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/guard
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node .github/guard/waiting.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # A Discord webhook into #mod-alerts only (kept secret: whoever has it can post there).
+          MOD_ALERTS_WEBHOOK: ${{ secrets.MOD_ALERTS_WEBHOOK }}

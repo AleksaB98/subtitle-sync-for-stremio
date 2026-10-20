@@ -3,7 +3,7 @@ body:
     attributes:
       value: |
         **Never paste your install link or any key here.** Anyone could use your accounts with it. A post that has one is removed by itself.
-        Your support code is all I need: in Stremio, open Addons, find Subtitle Sync and press its gear (Configure). The code is at the top.
+        Your support code is all I need: in Stremio, open Addons, find Subtitle Sync and press its gear (Configure). The code is at the top. Copy it right before you post: a new key or link gives a new code.
   - type: input
     id: code
     attributes:

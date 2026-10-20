@@ -1,6 +1,6 @@
 # Rules
 
-The same rules hold here in Discussions and on the [Subtitle Sync Discord server](https://discord.gg/q9FQVN2Qxg). They keep these places useful, and keep them open.
+The same rules hold here in Discussions and on the [Subtitle Sync Discord server](https://discord.gg/x2ca3UWTzk). They keep these places useful, and keep them open.
 
 1. **Subtitle Sync and subtitles.** Setting it up, timing, subtitle sites, apps and devices, bugs and ideas: that is what Discussions here, and #help and #general on Discord, are for. Anything else, within these rules, goes in #off-topic on Discord.
 2. **Nothing about where videos come from.** No links to films or episodes, to sites that share or stream them, or to file-sharing links of any kind, and don't ask where to watch something. To describe a video, give its title (and season and episode) and your support code.
