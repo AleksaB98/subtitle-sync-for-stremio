@@ -1,7 +1,7 @@
 // Run daily by .github/workflows/waiting.yml: the discussions that have waited a day or more without an
 // answer from the repository's owner, posted to the Discord server's #mod-alerts through its webhook (the
-// secret MOD_ALERTS_WEBHOOK, which can only post in that one channel). The Discord server's own #help
-// posts get the same list from the addon server. Nothing is posted when none waits.
+// secret MOD_ALERTS_WEBHOOK, which can only post in that one channel). The Discord server's own posts in
+// #questions, #bugs and #ideas get the same list from the addon server. Nothing is posted when none waits.
 
 const DAY_MS = 24 * 3_600_000;
 export const HEADING = "Waiting for an answer on GitHub (24 h or more):";
