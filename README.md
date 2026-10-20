@@ -12,7 +12,7 @@ same way and kept for everyone: [free AI subtitles for Stremio](https://subtitle
 **Set it up: https://subtitlesync.stream** (English) · **https://subtitlesync.stream/sr/** (srpski) · **https://subtitlesync.stream/pt-br/** (português)
 
 <p align="center">
-  <b>Free, with no ads and no limits.</b> If it helps you, you can support it:
+  <b>Free, with no ads.</b> If it helps you, you can support it:
 </p>
 
 <p align="center">
