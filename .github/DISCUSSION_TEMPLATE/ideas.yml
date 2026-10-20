@@ -2,19 +2,19 @@ body:
   - type: markdown
     attributes:
       value: |
-        An idea for Subtitle Sync: a subtitle site, a language, something on the setup page. Others can upvote it.
+        A suggestion for Subtitle Sync: a subtitle site, a language, something on the setup page. Others can upvote it.
         **Never paste your install link or any key here.**
   - type: checkboxes
     id: searched
     attributes:
       label: Looked first
       options:
-        - label: I looked for an existing idea like this first (the search box above the list). If there is one, I upvote it instead.
+        - label: I looked for an existing suggestion like this first (the search box above the list). If there is one, I upvote it instead.
           required: true
   - type: textarea
-    id: idea
+    id: suggestion
     attributes:
-      label: Your idea
+      label: Your suggestion
       description: What you would like, and when it would help you.
     validations:
       required: true
