@@ -1,6 +1,7 @@
 // Run by .github/workflows/guard.yml on every new or edited discussion and reply. A post holding a link
 // with someone's setup in it or a key is deleted (an edit would leave it in the public edit history) and
-// posted again without it, naming its author. Never prints a post's text.
+// posted again without it, naming its author; a discussion that already has replies is cleaned in place
+// instead, so the answers stay. Never prints a post's text.
 import { readFileSync } from "node:fs";
 import { cleaned, findSecrets, noteFor } from "./patterns.mjs";
 
@@ -39,6 +40,18 @@ if (comment) {
   await graphql(
     "mutation($d: ID!, $r: ID, $body: String!) { addDiscussionComment(input: { discussionId: $d, replyToId: $r, body: $body }) { clientMutationId } }",
     { d: discussion.node_id, r: node?.replyTo?.id ?? null, body: `${note}\n\n---\n\n${cleaned(comment.body, found)}` },
+  );
+} else if (discussion.comments > 0) {
+  // A discussion that already has replies (an old question edited later): deleting it would take every
+  // reply and the marked answer with it. It is cleaned in place instead, and a reply asks the owner to
+  // delete the old revision from its edit history (only a maintainer can, on the website).
+  await graphql(
+    "mutation($id: ID!, $title: String!, $body: String!) { updateDiscussion(input: { discussionId: $id, title: $title, body: $body }) { clientMutationId } }",
+    { id: discussion.node_id, title: cleaned(discussion.title, found), body: cleaned(discussion.body, found) },
+  );
+  await graphql(
+    "mutation($d: ID!, $body: String!) { addDiscussionComment(input: { discussionId: $d, body: $body }) { clientMutationId } }",
+    { d: discussion.node_id, body: `${note.replace("so I removed it and posted it again below without it", "so I removed it from the post")}\n\n@${event.repository.owner.login}: the old text is still in this post's edit history. Open "edited" at the top of the post and delete that revision.` },
   );
 } else {
   await graphql("mutation($id: ID!) { deleteDiscussion(input: { id: $id }) { clientMutationId } }", { id: discussion.node_id });
