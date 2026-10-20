@@ -1,0 +1,29 @@
+name: Remove install links and keys
+
+on:
+  discussion:
+    types: [created, edited]
+  discussion_comment:
+    types: [created, edited]
+
+permissions:
+  contents: read
+  discussions: write
+
+concurrency:
+  group: guard-${{ github.event.comment.node_id || github.event.discussion.node_id }}
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/guard
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node .github/guard/guard.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
