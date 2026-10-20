@@ -1,0 +1,13 @@
+body:
+  - type: markdown
+    attributes:
+      value: |
+        An idea for Subtitle Sync: a subtitle site, a language, something on the setup page. Others can upvote it.
+        **Never paste your install link or any key here.**
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What you would like, and when it would help you.
+    validations:
+      required: true

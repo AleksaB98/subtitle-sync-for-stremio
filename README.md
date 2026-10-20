@@ -93,7 +93,7 @@ Setup takes 5 to 15 minutes on a guided page, in English, Serbian or Portuguese 
 ## Questions and help
 
 - Frequently asked questions and a contact form: https://subtitlesync.stream/help
-- Questions, ideas and news in public: [r/SubtitleSync](https://www.reddit.com/r/SubtitleSync/) on Reddit. Add your support code to your post, and never post your install link: it holds your keys.
+- Questions, bugs, ideas and news in public: [Discussions](https://github.com/AleksaB98/subtitle-sync-for-stremio/discussions) here on GitHub, or the [Subtitle Sync Discord server](https://discord.gg/q9FQVN2Qxg). Add your support code to your post, and never post your install link or a key: anyone could use your accounts with it, and a post that has one is removed.
 - What changed and when: [CHANGELOG.md](CHANGELOG.md)
 
 ## Support
