@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "15 9 * * *"
   workflow_dispatch:
+    inputs:
+      test:
+        description: "Post one line to #mod-alerts even when nothing waits (checks the webhook)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -25,3 +30,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # A Discord webhook into #mod-alerts only (kept secret: whoever has it can post there).
           MOD_ALERTS_WEBHOOK: ${{ secrets.MOD_ALERTS_WEBHOOK }}
+          WEBHOOK_TEST: ${{ inputs.test }}

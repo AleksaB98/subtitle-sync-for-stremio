@@ -42,11 +42,14 @@ async function main() {
   if (!response.ok || json.errors) throw new Error(`GitHub answered ${response.status}`);
   const lines = waitingLines(json.data.repository.discussions.nodes, owner, Date.now());
   console.log(`${lines.length} waiting`);
-  if (lines.length === 0 || !process.env.MOD_ALERTS_WEBHOOK) return;
+  // Started by hand with "test": one line, so the webhook is seen to work.
+  const test = process.env.WEBHOOK_TEST === "true";
+  if ((lines.length === 0 && !test) || !process.env.MOD_ALERTS_WEBHOOK) return;
+  const content = lines.length ? [HEADING, ...lines].join("\n") : "GitHub waiting list: the webhook works (a test; nothing waits).";
   const sent = await fetch(process.env.MOD_ALERTS_WEBHOOK, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ content: [HEADING, ...lines].join("\n").slice(0, 2000), allowed_mentions: { parse: [] } }),
+    body: JSON.stringify({ content: content.slice(0, 2000), allowed_mentions: { parse: [] } }),
   });
   if (!sent.ok) throw new Error(`Discord answered ${sent.status}`);
 }
