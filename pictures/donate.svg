@@ -1,0 +1,5 @@
+<svg width="150" height="44" viewBox="0 0 150 44" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Donate">
+  <rect x="1" y="1" width="148" height="42" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.5"/>
+  <path transform="translate(22 12) scale(1.25)" d="M8 14.2C3 10.5 0.6 8 0.6 5 0.6 2.8 2.3 1.2 4.3 1.2c1.5 0 2.8.8 3.7 2 .9-1.2 2.2-2 3.7-2 2 0 3.7 1.6 3.7 3.8 0 3-2.4 5.5-7.4 9.2z" fill="#bf3989"/>
+  <text x="54" y="29" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="600" fill="#24292f">Donate</text>
+</svg>

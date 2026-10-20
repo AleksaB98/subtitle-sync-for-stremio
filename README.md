@@ -11,6 +11,16 @@ same way and kept for everyone: [free AI subtitles for Stremio](https://subtitle
 
 **Set it up: https://subtitlesync.stream** (English) · **https://subtitlesync.stream/sr/** (srpski) · **https://subtitlesync.stream/pt-br/** (português)
 
+<p align="center">
+  <b>Free, with no ads and no limits.</b> If it helps you, you can support it:
+</p>
+
+<p align="center">
+  <a href="https://ko-fi.com/antebellum">
+    <img src="pictures/donate.svg" alt="Donate" width="150">
+  </a>
+</p>
+
 > **Em português:** o Subtitle Sync para Stremio encontra legendas no seu idioma e as sincroniza com o
 > arquivo exato que você está assistindo, usando a legenda embutida no próprio vídeo quando possível.
 > Legenda atrasada ou adiantada? Veja [por que acontece e como sincronizar](https://subtitlesync.stream/pt-br/legenda-atrasada-stremio).
@@ -98,7 +108,11 @@ Setup takes 5 to 15 minutes on a guided page, in English, Serbian or Portuguese 
 
 ## Support
 
-The addon is free and has no ads. Its server runs on donations: https://ko-fi.com/antebellum
+The addon is free and has no ads. Its server runs on donations. Thank you for your support.
+
+<a href="https://ko-fi.com/antebellum">
+  <img src="pictures/donate.svg" alt="Donate" width="150">
+</a>
 
 ---
 
