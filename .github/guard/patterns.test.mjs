@@ -1,6 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cleaned, findSecrets, noteFor } from "./patterns.mjs";
+
+// The real lists are private (the workflow's GUARD_RULES secret); these made-up ones test the shapes.
+process.env.GUARD_RULES = JSON.stringify({
+  piracySites: ["fakeshare", "fs"],
+  piracyLinks: ["fakelink:\\?id=", "[a-z0-9_-]\\.fakefile\\b"],
+  referralLinks: ["[?&](ref|aff)=[a-z0-9_-]+"],
+  tradingPhrases: ["fake trade"],
+  flagWords: ["fakeword", "where to look"],
+});
+const { cleaned, findFlags, findSecrets, noteFor } = await import("./patterns.mjs");
 
 const SEALED = "AQx" + "Zk9_-a1B2c3D4e5F6g7H8i9J0".repeat(12);
 
@@ -50,4 +59,28 @@ test("the note names the author and what was removed", () => {
   const note = noteFor("someone", [{ kind: "link", match: "x" }, { kind: "key", match: "y" }]);
   assert.match(note, /^@someone, your post had a link with your setup in it and a key/);
   assert.ok(!note.includes("—"));
+  assert.match(note, /The rules: https:\/\/github\.com\/AleksaB98\/subtitle-sync-for-stremio\/blob\/main\/CODE_OF_CONDUCT\.md$/);
+});
+
+test("links to a listed site or file for getting videos are removed, with or without https://, whatever the domain ends in", () => {
+  for (const link of ["https://fakeshare.org/film/123", "www.fakeshare.to", "fakeshare.example/x?y=1", "fs.mx/page", "fakelink:?id=abc&x=y", "Some.Film.2026.fakefile"]) {
+    const text = `look here ${link} thanks`;
+    const found = findSecrets(text);
+    assert.deepEqual(found.map((f) => f.kind), ["piracy"], link);
+    assert.equal(cleaned(text, found), "look here [link removed] thanks", link);
+  }
+  // A word that only contains a listed name, or a name without a domain, is left alone.
+  assert.deepEqual(findSecrets("the fakeshares were fun, I asked fakeshare about it, and fs is short"), []);
+  const note = noteFor("someone", findSecrets("fakeshare.org"));
+  assert.match(note, /^@someone, your post had a link to a site or file for getting videos, which this place does not allow \(rule 2\)/);
+  assert.ok(!note.includes("new keys"), "no key advice for a link that held none");
+});
+
+test("referral links are removed; words worth a look are only flagged", () => {
+  const found = findSecrets("get it at https://service.example/plans?ref=abc123 now");
+  assert.deepEqual(found.map((f) => f.kind), ["referral"]);
+  assert.match(noteFor("x", found), /a referral link, which this place does not allow \(rule 4\)/);
+  assert.deepEqual(findSecrets("Fakeword, where to look, a fake trade"), []);
+  assert.deepEqual(findFlags("Fakeword, where to look, a FAKE TRADE, fakewords"), ["fakeword", "where to look", "fake trade"]);
+  assert.deepEqual(findFlags("an ordinary question about timing"), []);
 });

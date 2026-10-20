@@ -11,3 +11,10 @@ body:
       description: What you would like, and when it would help you.
     validations:
       required: true
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Rules
+      options:
+        - label: My post follows [the rules](https://github.com/AleksaB98/subtitle-sync-for-stremio/blob/main/CODE_OF_CONDUCT.md).
+          required: true

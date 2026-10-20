@@ -3,7 +3,7 @@
 // posted again without it, naming its author; a discussion's replies are carried into the new post.
 // Never prints a post's text.
 import { readFileSync } from "node:fs";
-import { cleaned, findSecrets, noteFor } from "./patterns.mjs";
+import { cleaned, findFlags, findSecrets, noteFor } from "./patterns.mjs";
 
 const token = process.env.GITHUB_TOKEN;
 const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8"));
@@ -25,7 +25,19 @@ const post = comment ?? discussion;
 const text = comment ? comment.body : `${discussion.title}\n${discussion.body}`;
 const found = findSecrets(text);
 if (found.length === 0) {
-  console.log("nothing to remove");
+  // Words worth a look (rules 2 and 4) are never removed: the discussion gets the label "needs-look"
+  // for the owner to read it.
+  const flags = findFlags(text);
+  if (flags.length) {
+    const { repository } = await graphql(
+      "query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) { label(name: \"needs-look\") { id } } }",
+      { owner: event.repository.owner.login, name: event.repository.name },
+    );
+    if (repository.label) {
+      await graphql("mutation($id: ID!, $labels: [ID!]!) { addLabelsToLabelable(input: { labelableId: $id, labelIds: $labels }) { clientMutationId } }", { id: discussion.node_id, labels: [repository.label.id] });
+      console.log(`flagged for a look: ${flags.length} word(s)`);
+    } else console.log("words worth a look, but the label needs-look does not exist");
+  } else console.log("nothing to remove");
   process.exit(0);
 }
 console.log(`removing a ${comment ? "reply" : "discussion"} by ${post.user.login}: ${found.map((f) => f.kind).join(", ")}`);

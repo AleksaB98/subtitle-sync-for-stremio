@@ -34,6 +34,13 @@ body:
     id: what
     attributes:
       label: What happened
-      description: Which subtitle row you picked, what you expected and what you saw (out of sync by how much, a message in the player, nothing listed). A screenshot helps.
+      description: Which subtitle row you picked, what you expected and what you saw (out of sync by how much, a message in the player, nothing listed). A screenshot, or the subtitle file that misbehaves, helps.
     validations:
       required: true
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Rules
+      options:
+        - label: My post has no install link or key, and no links to videos or to sites for getting them ([the rules](https://github.com/AleksaB98/subtitle-sync-for-stremio/blob/main/CODE_OF_CONDUCT.md)).
+          required: true

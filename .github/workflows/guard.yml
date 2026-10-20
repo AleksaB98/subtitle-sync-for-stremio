@@ -1,4 +1,4 @@
-name: Remove install links and keys
+name: Keep the rules
 
 on:
   discussion:
@@ -27,3 +27,5 @@ jobs:
       - run: node .github/guard/guard.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The site and word lists, kept private (see patterns.mjs).
+          GUARD_RULES: ${{ secrets.GUARD_RULES }}
