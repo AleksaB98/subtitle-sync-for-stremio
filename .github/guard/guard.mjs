@@ -4,6 +4,7 @@
 // Never prints a post's text.
 import { readFileSync } from "node:fs";
 import { cleaned, findFlags, findSecrets, noteFor } from "./patterns.mjs";
+import { labelNew } from "./new-label.mjs";
 
 const token = process.env.GITHUB_TOKEN;
 const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8"));
@@ -71,8 +72,8 @@ if (comment) {
   const replies = (node?.comments.nodes ?? []).flatMap((c) => [quote(c, c.id === node.answer?.id), ...c.replies.nodes.map((r) => quote(r, false))]);
   const earlier = replies.length ? `\n\n---\n\n**The replies it had:**\n\n${replies.join("\n\n")}` : "";
   await graphql("mutation($id: ID!) { deleteDiscussion(input: { id: $id }) { clientMutationId } }", { id: discussion.node_id });
-  await graphql(
-    "mutation($repo: ID!, $cat: ID!, $title: String!, $body: String!) { createDiscussion(input: { repositoryId: $repo, categoryId: $cat, title: $title, body: $body }) { discussion { number } } }",
+  const made = await graphql(
+    "mutation($repo: ID!, $cat: ID!, $title: String!, $body: String!) { createDiscussion(input: { repositoryId: $repo, categoryId: $cat, title: $title, body: $body }) { discussion { id number } } }",
     {
       repo: event.repository.node_id,
       cat: discussion.category.node_id,
@@ -80,5 +81,7 @@ if (comment) {
       body: `${note}\n\n---\n\n${cleaned(discussion.body, found)}${earlier}`,
     },
   );
+  // Posted again by the workflow, which starts no workflow: its state label is set here (new-label.mjs).
+  if (discussion.category?.name !== "Announcements") await labelNew(graphql, event.repository.owner.login, event.repository.name, made.createDiscussion.discussion.id);
 }
 console.log("removed and posted again without it");

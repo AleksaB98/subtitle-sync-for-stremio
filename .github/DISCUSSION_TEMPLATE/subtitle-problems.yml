@@ -5,6 +5,7 @@ body:
         **Subtitle problems: it is installed, but the subtitles are not right.** Post here if Subtitle Sync is installed (you have a support code) and, in the player, subtitles come too early or too late, drift, are missing or not in your language, a translated subtitle stays on "translating", or the player shows a message from Subtitle Sync.
         **Not here:** you can't finish the setup, or you are changing settings: use **Setup help**.
         Examples: "Everything is 2 seconds late in The Office S02E03", "No Serbian subtitles for Dune, only English", "The player says my OpenSubtitles downloads are used up"
+        Its label shows where it stands: new, in progress, needs info (I am waiting for your answer), solved or closed. Reply to a solved or closed one to open it again.
         **Never paste your install link or any key here.** Anyone could use your accounts with it. A post that has one is removed by itself.
         Your support code is all I need: in Stremio, open Addons, find Subtitle Sync and press its gear (Configure). The code is at the top. Copy it right before you post: a new key or link gives a new code.
   - type: checkboxes

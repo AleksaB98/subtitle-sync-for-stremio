@@ -3,6 +3,7 @@ body:
     attributes:
       value: |
         A suggestion for Subtitle Sync: a subtitle site, a language, something on the setup page. Others can upvote it.
+        Its label shows where it stands: new, considering, planned, in development, done or not planned (needs info when I need more from you).
         **Never paste your install link or any key here.**
   - type: checkboxes
     id: searched

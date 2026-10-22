@@ -29,6 +29,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # The site and word lists, kept private (see patterns.mjs).
           GUARD_RULES: ${{ secrets.GUARD_RULES }}
+      # A new discussion gets the state label "new" (new-label.mjs).
+      - if: github.event_name == 'discussion' && github.event.action == 'created'
+        run: node .github/guard/new-label.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # A new discussion like earlier ones: they are listed in a comment, and the owner told in #mod-alerts.
       - if: github.event_name == 'discussion' && github.event.action == 'created'
         run: node .github/guard/similar.mjs

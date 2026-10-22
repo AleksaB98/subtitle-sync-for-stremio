@@ -5,6 +5,7 @@ body:
         **Setup help: before Subtitle Sync works.** Post here if you are setting it up or changing its settings: the setup page won't let you go on, a key or login is "not accepted", you don't know which option to choose, Install did nothing in Stremio, you have no support code yet, or a question before you install.
         **Not here:** it is installed, but the subtitles are late, missing or in the wrong language: use **Subtitle problems**.
         Examples: "OpenSubtitles says my API key is not accepted", "Which option do I pick in step 3 if I use Real-Debrid?", "Does it work on an LG TV?"
+        Its label shows where it stands: new, in progress, needs info (I am waiting for your answer), solved or closed. Reply to a solved or closed one to open it again.
         **Never paste your install link or any key here.** Anyone could use your accounts with it. A post that has one is removed by itself.
         Something private? Write from the setup page instead: https://subtitlesync.stream/help#contact
   - type: checkboxes
