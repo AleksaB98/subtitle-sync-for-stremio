@@ -9,13 +9,13 @@ const DAY_MS = 24 * 3_600_000;
 export const HEADING = "Waiting for an answer on GitHub:";
 /** The state labels, every category together; a discussion carries one. */
 export const STATES = ["new", "in progress", "needs info", "solved", "closed", "considering", "planned", "in development", "done", "not planned"];
-/** Finished: listed again only when someone writes after the last answer (reopened). */
+/** Finished: never listed, even after a reply (owner, 2026-10-23: they are checked by hand). */
 const FINISHED = new Set(["solved", "closed", "done", "not planned"]);
 
 /**
  * Why a discussion waits for the owner, or null (the same rules as the Discord list):
- * new and not answered; someone wrote after the owner's last answer (any state: an answer to "needs info", a
- * finished one reopened); "in progress" with no word from the owner for 3 days (a suggestion may stay "considering" for weeks); "needs info" with
+ * new and not answered; someone wrote after the owner's last answer (any state: an answer to "needs info"; a
+ * finished one is left out by `waitingLines`); "in progress" with no word from the owner for 3 days (a suggestion may stay "considering" for weeks); "needs info" with
  * no answer for 7 days ("close?"). A marked answer counts as finished.
  * @param {string | undefined} state
  * @param {{ login: string | undefined, at: number }[]} posts the discussion itself and every comment and reply
@@ -56,7 +56,7 @@ export function waitingLines(discussions, owner, now) {
       ...d.comments.nodes.flatMap((c) => [{ login: c.author?.login, at: Date.parse(c.createdAt) }, ...c.replies.nodes.map((r) => ({ login: r.author?.login, at: Date.parse(r.createdAt) }))]),
     ];
     const why = waitsFor(state, posts, owner, now);
-    if (!why || (state !== undefined && FINISHED.has(state) && why !== "the asker wrote")) continue;
+    if (!why || (state !== undefined && FINISHED.has(state))) continue;
     const hours = Math.floor((now - Date.parse(d.createdAt)) / 3_600_000);
     const age = hours >= 48 ? `${Math.floor(hours / 24)} days` : `${hours} h`;
     lines.push({ at: Date.parse(d.createdAt), line: `- ${d.title} (${why}${state ? `, ${state}` : ""}, ${age} old): ${d.url}` });

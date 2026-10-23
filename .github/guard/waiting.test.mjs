@@ -13,7 +13,7 @@ const d = (title, hours, extra = {}) => ({
 });
 const labelled = (name) => ({ labels: { nodes: [{ name }] } });
 
-test("listed by state: new, the asker wrote after the owner (a finished one reopened too), quiet in progress, needs info unanswered for a week", () => {
+test("listed by state: new, the asker wrote after the owner, quiet in progress, needs info unanswered for a week; never a finished one, a reply on one neither", () => {
   number = 0;
   const lines = waitingLines([
     d("Fresh one", 5, labelled("new")),
@@ -33,7 +33,6 @@ test("listed by state: new, the asker wrote after the owner (a finished one reop
   assert.deepEqual(lines, [
     "- Never answered back (no answer for 8 days: close?, needs info, 12 days old): https://github.com/x/y/discussions/6",
     "- Quiet one (no update for 4 days, in progress, 5 days old): https://github.com/x/y/discussions/4",
-    "- Came back (the asker wrote, solved, 3 days old): https://github.com/x/y/discussions/9",
     "- Info came (the asker wrote, needs info, 3 days old): https://github.com/x/y/discussions/7",
     "- Old unlabelled (new, 2 days old): https://github.com/x/y/discussions/2",
     "- Fresh one (new, new, 5 h old): https://github.com/x/y/discussions/1",
