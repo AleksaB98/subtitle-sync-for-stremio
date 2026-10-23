@@ -84,3 +84,22 @@ test("referral links are removed; words worth a look are only flagged", () => {
   assert.deepEqual(findFlags("Fakeword, where to look, a FAKE TRADE, fakewords"), ["fakeword", "where to look", "fake trade"]);
   assert.deepEqual(findFlags("an ordinary question about timing"), []);
 });
+
+test("pictures uploaded to GitHub are not keys, though their links end in a UUID", () => {
+  const uuid = "8c1d0b6a-3f2e-4d5c-9b8a-7e6f5d4c3b2a";
+  for (const text of [
+    `<img width="4080" height="3072" alt="17927608986002089210910904083092" src="https://github.com/user-attachments/assets/${uuid}" />`,
+    `![screenshot](https://github.com/user-attachments/assets/${uuid})`,
+    `see https://github.com/user-attachments/files/${uuid}/log.txt`,
+    `https://private-user-images.githubusercontent.com/123/456-${uuid}.png?jwt=abc`,
+    `https://user-images.githubusercontent.com/123/${uuid}.png`,
+  ]) assert.deepEqual(findSecrets(text), [], text);
+});
+
+test("a UUID beside a GitHub picture, or on another site, is still a key", () => {
+  const uuid = "8c1d0b6a-3f2e-4d5c-9b8a-7e6f5d4c3b2a";
+  const torbox = "1f2e3d4c-5b6a-4789-8a9b-0c1d2e3f4a5b";
+  const found = findSecrets(`![x](https://github.com/user-attachments/assets/${uuid}) my key ${torbox}`);
+  assert.deepEqual(found.map((f) => f.match), [torbox]);
+  assert.deepEqual(findSecrets(`https://example.com/user-attachments/assets/${torbox}`).map((f) => f.kind), ["key"]);
+});

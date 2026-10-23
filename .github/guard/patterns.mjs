@@ -38,6 +38,10 @@ const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/g
 // in them. A file hash or commit (only 0-9 and a-f) is left alone.
 const TOKEN = /\b[A-Za-z0-9]{32,64}\b/g;
 
+// A picture or file uploaded to GitHub itself: its link ends in a UUID that is no key (2026-10-23, a
+// post's two screenshots were removed as "a key"). Taken out before any rule looks.
+const GITHUB_UPLOAD = /https:\/\/(?:github\.com\/user-attachments\/(?:assets|files)\/|(?:private-)?user-images\.githubusercontent\.com\/)[^\s<>()\[\]"'`]*/gi;
+
 /**
  * Everything to remove from the text, in the order found, each named by its kind.
  * @param {string} text
@@ -51,7 +55,7 @@ export function findSecrets(text) {
     seen.add(match);
     found.push({ kind, match });
   };
-  const source = String(text ?? "");
+  const source = String(text ?? "").replace(GITHUB_UPLOAD, " ");
   const without = () => found.reduce((rest, f) => rest.split(f.match).join(" "), source);
   for (const m of source.matchAll(PIRACY_SITE)) add("piracy", m[0]);
   for (const m of without().matchAll(PIRACY_LINK)) add("piracy", m[0]);
