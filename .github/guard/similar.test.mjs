@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { commentFor, similarDiscussions, stemsOf } from "./similar.mjs";
+import { commentFor, similarDiscussions, stemsOf, stillThere } from "./similar.mjs";
 
 const d = (number, title, body, extra = {}) => ({ number, title, body, url: `https://github.com/x/y/discussions/${number}`, isAnswered: false, closed: false, ...extra });
 
@@ -27,4 +27,11 @@ test("the comment lists them with their state and asks to continue there", () =>
     "",
     "If one of them is the same, please continue there; this one may be closed as a duplicate.",
   ].join("\n"));
+});
+
+test("a discussion the guard removed is gone, not an error: GitHub answers NOT_FOUND for it (2026-10-23, every removal run ended red)", () => {
+  const gone = { data: { node: null }, errors: [{ type: "NOT_FOUND", path: ["node"], message: "Could not resolve to a node with the global id of 'D_x'." }] };
+  assert.equal(stillThere(gone), false);
+  assert.equal(stillThere({ data: { node: { id: "D_x" } } }), true);
+  assert.throws(() => stillThere({ data: null, errors: [{ type: "FORBIDDEN", message: "no" }] }), /FORBIDDEN|no/);
 });

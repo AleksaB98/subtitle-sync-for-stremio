@@ -74,15 +74,32 @@ export function commentFor(matches) {
   ].join("\n");
 }
 
-async function graphql(query, variables) {
+async function post(query, variables) {
   const res = await fetch("https://api.github.com/graphql", {
     method: "POST",
     headers: { authorization: `bearer ${process.env.GITHUB_TOKEN}`, "content-type": "application/json" },
     body: JSON.stringify({ query, variables }),
   });
   const json = await res.json();
-  if (!res.ok || json.errors) throw new Error(`GitHub answered ${res.status}: ${JSON.stringify(json.errors ?? json.message)}`);
+  if (!res.ok) throw new Error(`GitHub answered ${res.status}: ${JSON.stringify(json.message ?? json.errors)}`);
+  return json;
+}
+
+async function graphql(query, variables) {
+  const json = await post(query, variables);
+  if (json.errors) throw new Error(`GitHub answered: ${JSON.stringify(json.errors)}`);
   return json.data;
+}
+
+/**
+ * Whether the discussion is still there, from GitHub's answer to `node(id:)`. A removed one is answered with a
+ * NOT_FOUND error, not an empty node (2026-10-23: every run after the guard removed a post ended red here).
+ */
+export function stillThere(answer) {
+  const errors = answer.errors ?? [];
+  if (errors.length > 0 && errors.every((e) => e.type === "NOT_FOUND")) return false;
+  if (errors.length > 0) throw new Error(`GitHub answered: ${JSON.stringify(errors)}`);
+  return Boolean(answer.data?.node);
 }
 
 async function main() {
@@ -91,8 +108,7 @@ async function main() {
   if (event.action !== "created" || !discussion || event.comment) return;
   if (discussion.category?.name === "Announcements") return console.log("an announcement: not checked");
   // The guard may have removed it (a link or key in it): its new copy is not checked.
-  const { node } = await graphql("query($id: ID!) { node(id: $id) { id } }", { id: discussion.node_id });
-  if (!node) return console.log("removed by the guard: not checked");
+  if (!stillThere(await post("query($id: ID!) { node(id: $id) { id } }", { id: discussion.node_id }))) return console.log("removed by the guard: not checked");
 
   // Every earlier discussion, 100 a page.
   const [owner, name] = (process.env.GITHUB_REPOSITORY ?? "").split("/");
