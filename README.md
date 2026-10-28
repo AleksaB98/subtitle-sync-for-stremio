@@ -53,6 +53,9 @@ More: [Stremio subtitles out of sync? Why it happens and how to fix it](https://
    language, then English. More: [free AI subtitles for Stremio](https://subtitlesync.stream/stremio-ai-subtitles)
    ([srpski](https://subtitlesync.stream/sr/prevod-titlova-na-srpski), [português](https://subtitlesync.stream/pt-br/legendas-traduzidas-com-ia)).
 
+Chinese is two choices, Simplified (简体中文) and Traditional (繁體中文): each subtitle is put under the one its
+characters are written in, whatever the site filed it under, and Chinese-English ones are marked 中英双语.
+
 Prefer a shorter menu? Under Advanced on the setup page, "The subtitle menu" lets you choose one
 subtitle per language, the best one found, instead of all of them. If it cannot be lined up when
 you pick it, the next best is tried for you, up to three more. Where nothing can be compared with
