@@ -4,7 +4,7 @@
 
 Subtitle Sync for Stremio finds subtitles in your language and times them to the exact file you are
 playing, using the video's own subtitle track when it can. It is a free Stremio addon: subtitles come
-from OpenSubtitles, and from Titlovi.com, SubDL, SubSource, Subs.ro and AltyaziDB if you add them, and are lined
+from OpenSubtitles, and from Titlovi.com, SubDL, SubSource, Subs.ro, AltyaziDB and TheSubtitleDB if you add them, and are lined
 up before the subtitle menu opens. The one that lines up goes on top of the menu. When no subtitle exists in
 any of your languages, it translates one with AI, free with your own Google Gemini key (no card), timed the
 same way and kept for everyone: [free AI subtitles for Stremio](https://subtitlesync.stream/stremio-ai-subtitles).
@@ -43,7 +43,8 @@ More: [Stremio subtitles out of sync? Why it happens and how to fix it](https://
 ## What it does
 
 1. Looks for subtitles in your languages on OpenSubtitles, which every install has, and on
-   Titlovi.com, SubDL, SubSource and, for Romanian, Subs.ro and, for Turkish, AltyaziDB if you add them, each with your own account or key.
+   Titlovi.com, SubDL, SubSource, for Romanian, Subs.ro, for Turkish, AltyaziDB, and TheSubtitleDB if you add them, each with your own
+   account or key.
 2. Takes a timing reference for your copy of the film or episode.
 3. Compares each subtitle's dialogue with it and re-times it: a fixed gap, a different speed,
    or a different cut.
@@ -92,7 +93,7 @@ Setup takes 5 to 15 minutes on a guided page, in English, Serbian or Portuguese 
 1. Pick your subtitle languages, in order.
 2. Add your OpenSubtitles account: its API key, username and password (required, free).
    Optionally add Titlovi.com (paid: a yearly supporter donation to Titlovi.com), SubDL,
-   SubSource or, for Romanian, Subs.ro and, for Turkish, AltyaziDB (free, each with its own key),
+   SubSource, TheSubtitleDB or, for Romanian, Subs.ro and, for Turkish, AltyaziDB (free, each with its own key),
    and a free Gemini key for machine translations.
 3. Say whether you use a debrid service (this answer is needed; the step says what each
    answer gets). With TorBox, paste your TorBox API key (the simplest way: the addon then
@@ -120,4 +121,4 @@ The addon is free and has no ads. Its server runs on donations. Thank you for yo
 ---
 
 Subtitle Sync for Stremio is an independent project. It is not made by or connected to
-Stremio, Titlovi.com, OpenSubtitles, SubDL, SubSource, Subs.ro, AltyaziDB or any stream addon.
+Stremio, Titlovi.com, OpenSubtitles, SubDL, SubSource, Subs.ro, AltyaziDB, TheSubtitleDB or any stream addon.
