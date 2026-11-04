@@ -17,6 +17,8 @@ function stand(discussionNow, comments, options = {}) {
   const perPage = 100;
   const graphql = async (query, variables) => {
     calls.push({ query, variables });
+    // A mutation GitHub refuses, when a test says so ("createDiscussion", "deleteDiscussion", ...).
+    if (options.fail && query.includes(`${options.fail}(input`)) throw new Error(`GitHub answered 502 for ${options.fail}`);
     if (query.includes("on Discussion { title body answer")) return { node: discussionNow };
     if (query.includes("comments(first: 100")) {
       const from = variables.after === null ? 0 : Number(variables.after);
@@ -98,4 +100,50 @@ test("PUB-002: a reply cleaned meanwhile is left alone; one that still holds it 
   assert.equal(posted.r, "K0");
   assert.match(posted.body, /and one more thing/);
   assert.doesNotMatch(posted.body, new RegExp(SEALED));
+});
+
+const { bodyWithin } = await import("./run.mjs");
+const order = (gh) => gh.calls.map((c) => /(createDiscussion|deleteDiscussionComment|deleteDiscussion|addDiscussionComment)\(input/.exec(c.query)?.[1]).filter(Boolean);
+
+test("review: the new post is made before the old one is deleted; a post that cannot be made deletes nothing", async () => {
+  const comments = [{ id: "c1", author: { login: "u1" }, createdAt: at, body: "the fix", replies: [] }];
+  const fine = stand({ title: "Help", body: `my link ${LINK}`, answer: { id: "c1" } }, comments);
+  await runGuard(discussionEvent("Help", `my link ${LINK}`), fine.graphql, quiet);
+  assert.deepEqual(order(fine), ["createDiscussion", "deleteDiscussion"]);
+  assert.match(fine.did("createDiscussion")[0].variables.body, /\*\*@u1\*\*, 2026-11-05 \(marked as the answer\):\n> the fix/);
+
+  const refused = stand({ title: "Help", body: `my link ${LINK}`, answer: null }, comments, { fail: "createDiscussion" });
+  await assert.rejects(runGuard(discussionEvent("Help", `my link ${LINK}`), refused.graphql, quiet), /502/);
+  assert.equal(refused.did("deleteDiscussion(").length, 0, "the original and its replies stay");
+
+  const event = { repository, discussion: { node_id: "D1" }, comment: { node_id: "K1", body: `here ${LINK}`, user: { login: "replier" } } };
+  const reply = stand(null, [], { commentNow: { body: `here ${LINK}`, replyTo: null }, fail: "addDiscussionComment" });
+  await assert.rejects(runGuard(event, reply.graphql, quiet), /502/);
+  assert.equal(reply.did("deleteDiscussionComment").length, 0);
+});
+
+test("review: run again after it worked (a replay, or the next run for the same post), nothing is posted twice", async () => {
+  const gone = stand(null, []);
+  assert.equal(await runGuard(discussionEvent("Help", `my link ${LINK}`), gone.graphql, quiet), "gone");
+  assert.deepEqual(order(gone), []);
+  // A reply whose discussion another run took down meanwhile: gone with it, nothing posted into nowhere.
+  const event = { repository, discussion: { node_id: "D1" }, comment: { node_id: "K1", body: `here ${LINK}`, user: { login: "replier" } } };
+  const orphan = stand(null, [], { commentNow: null });
+  assert.equal(await runGuard(event, orphan.graphql, quiet), "gone");
+  assert.deepEqual(order(orphan), []);
+});
+
+test("review: a discussion too long to carry whole stays within GitHub's limit and says what did not fit", async () => {
+  const long = "x".repeat(3_000);
+  const comments = Array.from({ length: 40 }, (_, i) => ({ id: `c${i}`, author: { login: `u${i}` }, createdAt: at, body: `${i} ${long}`, replies: [] }));
+  const gh = stand({ title: "Help", body: `my link ${LINK}`, answer: null }, comments);
+  await runGuard(discussionEvent("Help", `my link ${LINK}`), gh.graphql, quiet);
+  const body = gh.did("createDiscussion")[0].variables.body;
+  assert.ok(body.length <= 65_536, `${body.length} characters`);
+  assert.match(body, /_\d+ more replies did not fit here and could not be carried over\._/);
+  assert.match(body, /\*\*@u0\*\*/, "the first replies are kept");
+  // A post that was itself near the limit: cut, and said so, rather than a post GitHub refuses.
+  const own = bodyWithin("y".repeat(65_400));
+  assert.ok(own.length <= 65_536);
+  assert.match(own, /The rest of the post was too long to post again/);
 });
