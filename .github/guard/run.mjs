@@ -2,6 +2,7 @@
 // A post holding a link with someone's setup in it or a key is deleted (an edit would leave it in the public edit
 // history) and posted again without it, naming its author; a discussion's replies are carried into the new post.
 // Never prints a post's text.
+import { createHash } from "node:crypto";
 import { cleaned, findFlags, findSecrets, noteFor } from "./patterns.mjs";
 import { labelNew } from "./new-label.mjs";
 
@@ -10,17 +11,32 @@ import { labelNew } from "./new-label.mjs";
  * carries its heading and its marker. Whatever does not fit goes into the next part: nothing is ever cut.
  */
 const PART = 60_000;
+/** How many pages of 100 discussions the search for an earlier copy reads at most before it gives up and stops. */
+const lookupPages = () => Number(process.env.GUARD_LOOKUP_PAGES ?? 50);
+/** How many times one run starts over when the post changed while it was being copied. */
+const ROUNDS = 3;
 
-/** The hidden line each part of a new post carries: which post it stands for, and which part it is. */
-const markerOf = (id, part, parts) => `<!-- guard:replaces ${id} part ${part}/${parts} -->`;
-
-/** The part number a body says it is of the post standing for `id`, or null. */
-function partNumber(body, id) {
-  const at = (body ?? "").indexOf(`<!-- guard:replaces ${id} part `);
-  if (at === -1) return null;
-  const found = /^part (\d+)\/\d+ -->/.exec(body.slice(at + `<!-- guard:replaces ${id} `.length));
-  return found ? Number(found[1]) : null;
+/** A stop on purpose: the original is left where it is, and the run says why (it ends red, for the owner). */
+export class GuardStop extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "GuardStop";
+  }
 }
+
+/**
+ * The hidden line each part of a new post carries: the post it stands for, its number, and a print of everything
+ * the copy holds (all parts together), so a part made from an older version of the post is told from a current one.
+ */
+const markerOf = (id, part, parts, print) => `<!-- guard:replaces ${id} part ${part}/${parts} snapshot ${print} -->`;
+
+/** What a body's marker says about the post standing for `id`: its part, the number of parts, the print; or null. */
+function markerIn(body, id) {
+  const found = new RegExp(`<!-- guard:replaces ${id} part (\\d+)/(\\d+) snapshot ([0-9a-f]+) -->`).exec(body ?? "");
+  return found ? { part: Number(found[1]), parts: Number(found[2]), print: found[3] } : null;
+}
+
+const printOf = (title, parts) => createHash("sha256").update([title, ...parts].join("\u0000")).digest("hex").slice(0, 16);
 
 /** A reply's replies past its first 100, page by page. */
 async function moreReplies(graphql, commentId, first) {
@@ -29,7 +45,7 @@ async function moreReplies(graphql, commentId, first) {
   while (more.hasNextPage) {
     const { node } = await graphql(
       `query($id: ID!, $after: String) { node(id: $id) { ... on DiscussionComment {
-            replies(first: 100, after: $after) { pageInfo { hasNextPage endCursor } nodes { author { login } createdAt body } }
+            replies(first: 100, after: $after) { pageInfo { hasNextPage endCursor } nodes { id author { login } createdAt body } }
           } } }`,
       { id: commentId, after: more.endCursor },
     );
@@ -52,7 +68,7 @@ async function allComments(graphql, discussionId) {
       `query($id: ID!, $after: String) { node(id: $id) { ... on Discussion {
         comments(first: 100, after: $after) {
           pageInfo { hasNextPage endCursor }
-          nodes { id author { login } createdAt body replies(first: 100) { pageInfo { hasNextPage endCursor } nodes { author { login } createdAt body } } }
+          nodes { id author { login } createdAt body replies(first: 100) { pageInfo { hasNextPage endCursor } nodes { id author { login } createdAt body } } }
         }
       } } }`,
       { id: discussionId, after },
@@ -108,27 +124,30 @@ export function partsOf(head, quotes = []) {
 }
 
 /** A part as posted: after the first, a line saying it goes on with the post above; its marker last. */
-function posted(text, id, part, parts) {
+function posted(text, id, part, parts, print) {
   const lead = part > 1 ? `_(Part ${part} of ${parts}: the post above goes on here.)_\n\n` : "";
-  return `${lead}${text}\n\n${markerOf(id, part, parts)}`;
+  return `${lead}${text}\n\n${markerOf(id, part, parts, print)}`;
 }
 
 /**
  * Handles one created or edited discussion or reply. The event says which post; what the post says is read again
  * from GitHub first, as the run may have waited in line while its author edited it again: only what it says now is
- * judged and carried over (a post since cleaned is left alone). Between that read and the delete a few hundred
- * milliseconds remain, which GitHub's API gives no way to close; an edit landing exactly then is lost with the post.
+ * judged and carried over (a post since cleaned is left alone).
  *
  * Everything is posted again before anything is deleted: the post's words and every reply, in as many parts as they
- * take (no text is cut or left out). Each part carries a hidden marker naming the post it stands for, so a run that
- * stopped half way (a part GitHub refused, or the delete) is finished by the next run, which finds the parts made
- * already and posts only those missing: never twice. Runs for one post wait for each other (the workflow's
- * concurrency group, by the post's id); one finding the post gone has nothing to do.
+ * take (no text is cut or left out). Each part carries a hidden marker naming the post it stands for, its number and
+ * a print of the whole copy. A run that stopped half way (a part GitHub refused, or the delete) is finished by the
+ * next one, which finds the copy made already (every discussion is looked through, page by page) and posts only the
+ * parts missing: never twice. A copy made from an older version of the post (it changed since) is replaced by a
+ * current one, unless someone replied to it, when the run stops and leaves both for the owner. Before the delete,
+ * every part is read back and must be exactly what the post says now, and the post is read once more: changed while
+ * it was being copied, the run starts over (three times at most, then stops). Runs for one post wait for each other
+ * (the workflow's concurrency group, by the post's id). Between the last read and the delete a few hundred
+ * milliseconds remain, which GitHub's API gives no way to close.
  */
 export async function runGuard(event, graphql, log = console.log) {
   const comment = event.comment;
   const discussion = event.discussion;
-  const post = comment ?? discussion;
   const said = comment ? comment.body : `${discussion.title}\n${discussion.body}`;
 
   if (findSecrets(said).length === 0) {
@@ -148,112 +167,212 @@ export async function runGuard(event, graphql, log = console.log) {
     return "clean";
   }
 
-  return comment ? replaceReply(event, graphql, log) : replaceDiscussion(event, graphql, log);
+  const round = comment ? replyRound : discussionRound;
+  for (let attempt = 1; attempt <= ROUNDS; attempt++) {
+    const outcome = await round(event, graphql, log);
+    if (outcome !== "changed") return outcome;
+    log(`the post changed while it was being copied: starting over (${attempt} of ${ROUNDS})`);
+  }
+  throw new GuardStop(`the post kept changing while it was being copied (${ROUNDS} times): left where it is`);
 }
 
-async function replaceReply(event, graphql, log) {
-  const { comment, discussion } = event;
+const addComment = async (graphql, discussionId, replyToId, body) => {
+  const answer = await graphql(
+    "mutation($d: ID!, $r: ID, $body: String!) { addDiscussionComment(input: { discussionId: $d, replyToId: $r, body: $body }) { comment { id } } }",
+    { d: discussionId, r: replyToId, body },
+  );
+  return answer?.addDiscussionComment?.comment?.id ?? null;
+};
+const deleteComment = (graphql, id) => graphql("mutation($id: ID!) { deleteDiscussionComment(input: { id: $id }) { clientMutationId } }", { id });
+
+/** A reply as it is now: undefined when it is gone; null when it no longer holds a link or key. */
+async function replySnapshot(graphql, comment) {
   const { node } = await graphql(
     `query($id: ID!) { node(id: $id) { ... on DiscussionComment { body replyTo { id }
-      replies(first: 100) { pageInfo { hasNextPage endCursor } nodes { author { login } createdAt body } } } } }`,
+      replies(first: 100) { pageInfo { hasNextPage endCursor } nodes { id author { login } createdAt body } } } } }`,
     { id: comment.node_id },
   );
-  if (!node) {
+  if (!node) return undefined;
+  const found = findSecrets(node.body);
+  if (found.length === 0) return null;
+  // A reply with replies of its own: theirs are carried along too. Whether GitHub keeps them once their parent is
+  // deleted is not known here; carried, they are never lost (at worst they show twice).
+  const answers = await moreReplies(graphql, comment.node_id, node.replies ?? { nodes: [], pageInfo: { hasNextPage: false } });
+  const parts = partsOf(`${noteFor(comment.user.login, found)}\n\n---\n\n${cleaned(node.body, found)}`, answers.map((r) => quote(r, false)));
+  return { parent: node.replyTo?.id ?? null, found, parts, print: printOf("", parts) };
+}
+
+async function replyRound(event, graphql, log) {
+  const { comment, discussion } = event;
+  const now = await replySnapshot(graphql, comment);
+  if (now === undefined) {
     log("the reply is gone already");
     return "gone";
   }
-  const found = findSecrets(node.body);
-  if (found.length === 0) {
+  if (now === null) {
     log("the reply no longer holds it: left as it is");
     return "since-cleaned";
   }
-  // A reply with replies of its own: theirs are carried along too, never lost with it.
-  const answers = await moreReplies(graphql, comment.node_id, node.replies ?? { nodes: [], pageInfo: { hasNextPage: false } });
-  const parts = partsOf(`${noteFor(comment.user.login, found)}\n\n---\n\n${cleaned(node.body, found)}`, answers.map((r) => quote(r, false)));
-  // Parts made by an earlier run that stopped half way: found by their markers.
-  const made = new Map();
-  for (const c of await allComments(graphql, discussion.node_id)) {
-    const part = partNumber(c.body, comment.node_id);
-    if (part !== null) made.set(part, c.id);
-    for (const r of c.replies) {
-      const inner = partNumber(r.body, comment.node_id);
-      if (inner !== null) made.set(inner, null);
+  const { parent, found, parts, print } = now;
+  const id = comment.node_id;
+  // The parts an earlier run made, by their markers: current ones are kept, older ones replaced.
+  const scan = async () => {
+    const current = new Map();
+    let doubled = 0;
+    const stale = [];
+    for (const c of await allComments(graphql, discussion.node_id)) {
+      for (const one of [c, ...c.replies]) {
+        const mark = markerIn(one.body, id);
+        if (!mark) continue;
+        if (mark.print === print && mark.parts === parts.length) {
+          if (current.has(mark.part)) doubled++;
+          else current.set(mark.part, { id: one.id, body: one.body });
+        } else stale.push({ id: one.id, replies: one === c ? c.replies : [] });
+      }
+    }
+    return { current, stale, doubled };
+  };
+  const { current, stale } = await scan();
+  for (const old of stale) {
+    if (old.replies.some((r) => !markerIn(r.body, id))) {
+      throw new GuardStop("an older copy of the reply has replies of its own: both left where they are, for the owner");
     }
   }
-  log(`removing a reply by ${comment.user.login}: ${found.map((f) => f.kind).join(", ")} (${parts.length} part(s), ${made.size} made before)`);
-  const add = async (body, replyToId) => {
-    const answer = await graphql(
-      "mutation($d: ID!, $r: ID, $body: String!) { addDiscussionComment(input: { discussionId: $d, replyToId: $r, body: $body }) { comment { id } } }",
-      { d: discussion.node_id, r: replyToId, body },
-    );
-    return answer?.addDiscussionComment?.comment?.id ?? null;
-  };
+  // An older copy's parts: the ones under another first (they were posted last), then the first.
+  for (const old of [...stale].reverse()) await deleteComment(graphql, old.id);
+  log(`removing a reply by ${comment.user.login}: ${found.map((f) => f.kind).join(", ")} (${parts.length} part(s), ${current.size} current made before, ${stale.length} older replaced)`);
   // In its own place: under the same reply as before, or, for a top-level reply, its first part with the rest under it.
-  let first = made.has(1) ? made.get(1) : undefined;
-  if (first === undefined) first = await add(posted(parts[0], comment.node_id, 1, parts.length), node.replyTo?.id ?? null);
-  const under = node.replyTo?.id ?? first;
+  let first = current.get(1)?.id;
+  if (!current.has(1)) first = await addComment(graphql, discussion.node_id, parent, posted(parts[0], id, 1, parts.length, print));
+  const under = parent ?? first;
   for (let part = 2; part <= parts.length; part++) {
-    if (!made.has(part)) await add(posted(parts[part - 1], comment.node_id, part, parts.length), under);
+    if (!current.has(part)) await addComment(graphql, discussion.node_id, under, posted(parts[part - 1], id, part, parts.length, print));
   }
-  await graphql("mutation($id: ID!) { deleteDiscussionComment(input: { id: $id }) { clientMutationId } }", { id: comment.node_id });
+  // Read back: every part there once, exactly as the reply says now; and the reply itself unchanged meanwhile.
+  const back = await scan();
+  if (back.doubled > 0 || back.stale.length > 0) throw new GuardStop("the copy has a part twice or an older part left: the reply is left where it is");
+  for (let part = 1; part <= parts.length; part++) {
+    if (back.current.get(part)?.body !== posted(parts[part - 1], id, part, parts.length, print)) {
+      throw new GuardStop(`part ${part} of the copy could not be read back as posted: the reply is left where it is`);
+    }
+  }
+  const again = await replySnapshot(graphql, comment);
+  if (!again || again.print !== print) return "changed";
+  await deleteComment(graphql, id);
   log("removed and posted again without it");
   return "removed";
 }
 
-async function replaceDiscussion(event, graphql, log) {
-  const { discussion } = event;
-  // Deleting a discussion takes its replies with it, and the workflow's token may not edit someone else's post. So
-  // its title and body as they are now, and every reply, are read first and carried into the new post.
+/** A discussion as it is now: undefined when it is gone; null when it no longer holds a link or key. */
+async function discussionSnapshot(graphql, discussion) {
   const { node } = await graphql(
     "query($id: ID!) { node(id: $id) { ... on Discussion { title body answer { id } } } }",
     { id: discussion.node_id },
   );
-  if (!node) {
-    log("the discussion is gone already");
-    return "gone";
-  }
+  if (!node) return undefined;
   const found = findSecrets(`${node.title}\n${node.body}`);
-  if (found.length === 0) {
-    log("the discussion no longer holds it: left as it is");
-    return "since-cleaned";
-  }
+  if (found.length === 0) return null;
   const comments = await allComments(graphql, discussion.node_id);
   const quotes = comments.flatMap((c) => [quote(c, c.id === node.answer?.id), ...c.replies.map((r) => quote(r, false))]);
   const parts = partsOf(`${noteFor(discussion.user.login, found)}\n\n---\n\n${cleaned(node.body, found)}`, quotes);
+  const title = cleaned(node.title, found);
+  return { title, found, parts, replies: comments.length, print: printOf(title, parts) };
+}
 
-  // The new discussion an earlier run made already (it stopped before the delete, or a part was refused): among the
-  // newest, by its first part's marker.
-  const { repository } = await graphql(
-    `query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) {
-      discussions(first: 25, orderBy: { field: CREATED_AT, direction: DESC }) { nodes { id body } }
-    } }`,
-    { owner: event.repository.owner.login, name: event.repository.name },
-  );
-  let newId = repository?.discussions?.nodes?.find((d) => partNumber(d.body, discussion.node_id) === 1)?.id;
-  const made = new Set([1]);
-  if (newId) {
-    for (const c of await allComments(graphql, newId)) {
-      const part = partNumber(c.body, discussion.node_id);
-      if (part !== null) made.add(part);
+/**
+ * The copy an earlier run made of the discussion `id`, if any: every discussion of the repository is looked through,
+ * newest first, page by page. When that cannot be finished (a page refused, or more pages than allowed) nobody can
+ * say whether a copy exists: the run stops rather than risk a second one.
+ */
+async function earlierCopy(graphql, event, id) {
+  let after = null;
+  for (let page = 1; page <= lookupPages(); page++) {
+    const { repository } = await graphql(
+      `query($owner: String!, $name: String!, $after: String) { repository(owner: $owner, name: $name) {
+        discussions(first: 100, after: $after, orderBy: { field: CREATED_AT, direction: DESC }) { pageInfo { hasNextPage endCursor } nodes { id title body } }
+      } }`,
+      { owner: event.repository.owner.login, name: event.repository.name, after },
+    );
+    const list = repository?.discussions;
+    if (!list) throw new GuardStop("the discussions could not be read to look for an earlier copy: left where it is");
+    const copy = list.nodes.find((d) => markerIn(d.body, id)?.part === 1);
+    if (copy) return copy;
+    if (!list.pageInfo.hasNextPage) return null;
+    after = list.pageInfo.endCursor;
+  }
+  throw new GuardStop(`more than ${lookupPages() * 100} discussions: whether an earlier copy exists could not be told, left where it is`);
+}
+
+async function discussionRound(event, graphql, log) {
+  const { discussion } = event;
+  const id = discussion.node_id;
+  const now = await discussionSnapshot(graphql, discussion);
+  if (now === undefined) {
+    log("the discussion is gone already");
+    return "gone";
+  }
+  if (now === null) {
+    log("the discussion no longer holds it: left as it is");
+    return "since-cleaned";
+  }
+  const { title, found, parts, print } = now;
+
+  // The copy an earlier run made: kept when it is of the post as it is now, replaced when of an older version
+  // (unless someone replied to it: then both are left for the owner).
+  let copy = await earlierCopy(graphql, event, id);
+  let made = new Map();
+  if (copy) {
+    const first = markerIn(copy.body, id);
+    const comments = await allComments(graphql, copy.id);
+    const others = comments.flatMap((c) => [c, ...c.replies]).filter((c) => !markerIn(c.body, id));
+    if (first.print === print && first.parts === parts.length && copy.title === title) {
+      for (const c of comments) {
+        const mark = markerIn(c.body, id);
+        if (mark && mark.print === print) made.set(mark.part, c.body);
+      }
+    } else if (others.length > 0) {
+      throw new GuardStop("an older copy of the discussion has replies of its own: both left where they are, for the owner");
+    } else {
+      log("an older copy of the discussion (it changed since) is replaced by a current one");
+      await graphql("mutation($id: ID!) { deleteDiscussion(input: { id: $id }) { clientMutationId } }", { id: copy.id });
+      copy = null;
+      made = new Map();
     }
-  } else {
+  }
+  if (!copy) {
     const created = await graphql(
       "mutation($repo: ID!, $cat: ID!, $title: String!, $body: String!) { createDiscussion(input: { repositoryId: $repo, categoryId: $cat, title: $title, body: $body }) { discussion { id number } } }",
-      { repo: event.repository.node_id, cat: discussion.category.node_id, title: cleaned(node.title, found), body: posted(parts[0], discussion.node_id, 1, parts.length) },
+      { repo: event.repository.node_id, cat: discussion.category.node_id, title, body: posted(parts[0], id, 1, parts.length, print) },
     );
-    newId = created.createDiscussion.discussion.id;
+    copy = { id: created.createDiscussion.discussion.id };
   }
-  log(`removing a discussion by ${discussion.user.login}: ${found.map((f) => f.kind).join(", ")} (${comments.length} replies read, ${parts.length} part(s), ${made.size - 1} more made before)`);
+  log(`removing a discussion by ${discussion.user.login}: ${found.map((f) => f.kind).join(", ")} (${now.replies} replies read, ${parts.length} part(s), ${made.size} more made before)`);
   for (let part = 2; part <= parts.length; part++) {
-    if (made.has(part)) continue;
-    await graphql(
-      "mutation($d: ID!, $r: ID, $body: String!) { addDiscussionComment(input: { discussionId: $d, replyToId: $r, body: $body }) { comment { id } } }",
-      { d: newId, r: null, body: posted(parts[part - 1], discussion.node_id, part, parts.length) },
-    );
+    if (!made.has(part)) await addComment(graphql, copy.id, null, posted(parts[part - 1], id, part, parts.length, print));
   }
+
+  // Read back: the copy's title and every part exactly as the post says now, each once; and the post unchanged.
+  const { node: back } = await graphql("query($id: ID!) { node(id: $id) { ... on Discussion { title body } } }", { id: copy.id });
+  if (back?.title !== title || back?.body !== posted(parts[0], id, 1, parts.length, print)) {
+    throw new GuardStop("the copy's first part could not be read back as posted: the discussion is left where it is");
+  }
+  const seen = new Map();
+  for (const c of await allComments(graphql, copy.id)) {
+    const mark = markerIn(c.body, id);
+    if (mark) seen.set(mark.part, [...(seen.get(mark.part) ?? []), c.body]);
+  }
+  for (let part = 2; part <= parts.length; part++) {
+    const bodies = seen.get(part) ?? [];
+    if (bodies.length !== 1 || bodies[0] !== posted(parts[part - 1], id, part, parts.length, print)) {
+      throw new GuardStop(`part ${part} of the copy is missing, doubled or not as posted: the discussion is left where it is`);
+    }
+  }
+  const again = await discussionSnapshot(graphql, discussion);
+  if (!again || again.print !== print) return "changed";
+
   // Posted again by the workflow, which starts no workflow: its state label is set here (new-label.mjs).
-  if (discussion.category?.name !== "Announcements") await labelNew(graphql, event.repository.owner.login, event.repository.name, newId);
-  await graphql("mutation($id: ID!) { deleteDiscussion(input: { id: $id }) { clientMutationId } }", { id: discussion.node_id });
+  if (discussion.category?.name !== "Announcements") await labelNew(graphql, event.repository.owner.login, event.repository.name, copy.id);
+  await graphql("mutation($id: ID!) { deleteDiscussion(input: { id: $id }) { clientMutationId } }", { id });
   log("removed and posted again without it");
   return "removed";
 }
