@@ -16,6 +16,14 @@ afterEach(() => {
   delete process.env.GUARD_LOOKUP_PAGES;
 });
 
+/**
+ * Who posts. What the workflow's token posts is the bot GitHub reports as author Bot, login "github-actions",
+ * databaseId 41898282 (as on the repository's discussion #12, posted by this guard); everyone else is a User.
+ */
+const BOT = Object.freeze({ __typename: "Bot", login: "github-actions", databaseId: 41898282 });
+const person = (login) => ({ __typename: "User", login });
+const actor = (who) => (typeof who === "string" ? person(who) : who);
+
 /** GitHub in memory: discussions with their comments and replies; mutations change it, and can be made to fail. */
 class FakeGitHub {
   constructor() {
@@ -34,16 +42,16 @@ class FakeGitHub {
   afterMutation(mutation, change, when = () => true) {
     this.after.push({ mutation, change, when, done: false });
   }
-  discussion(title, body, comments = [], answer = null) {
+  discussion(title, body, comments = [], answer = null, author = "asker") {
     const id = `D${this.next++}`;
-    this.discussions.set(id, { id, title, body, createdAt: this.next, commentIds: [], answer: null });
+    this.discussions.set(id, { id, title, body, author: actor(author), createdAt: this.next, commentIds: [], answer: null });
     for (const c of comments) this.addComment(id, null, c.body, c.author);
     if (answer !== null) this.discussions.get(id).answer = this.discussions.get(id).commentIds[answer];
     return id;
   }
-  addComment(discussionId, replyTo, body, author = "github-actions") {
+  addComment(discussionId, replyTo, body, author = "someone") {
     const id = `K${this.next++}`;
-    this.comments.set(id, { id, discussionId, replyTo, body, author, createdAt: AT, replyIds: [] });
+    this.comments.set(id, { id, discussionId, replyTo, body, author: actor(author), createdAt: AT, replyIds: [] });
     if (replyTo) this.comments.get(replyTo).replyIds.push(id);
     else this.discussions.get(discussionId).commentIds.push(id);
     return id;
@@ -58,15 +66,20 @@ class FakeGitHub {
     }
     return all.join("\n");
   }
+  /** The workflow's own copies of a discussion (anyone else's lookalikes left out). */
   copiesOf(originalId) {
-    return [...this.discussions.values()].filter((d) => d.body.includes(`guard:replaces ${originalId} part 1/`));
+    return [...this.discussions.values()].filter((d) => d.author === BOT && d.body.includes(`guard:replaces ${originalId} part 1/`));
+  }
+  /** An author as GitHub would answer it: none at all when the test says GitHub gives none. */
+  shown(author) {
+    return this.hideAuthors ? null : author;
   }
   page(list, after, size = 100) {
     const from = after === null || after === undefined ? 0 : Number(after);
     return { slice: list.slice(from, from + size), pageInfo: { hasNextPage: from + size < list.length, endCursor: String(from + size) } };
   }
   replyNodes(ids) {
-    return ids.map((r) => { const c = this.comments.get(r); return { id: r, author: { login: c.author }, createdAt: c.createdAt, body: c.body }; });
+    return ids.map((r) => { const c = this.comments.get(r); return { id: r, author: this.shown(c.author), createdAt: c.createdAt, body: c.body }; });
   }
   graphql = async (query, variables) => {
     this.calls.push({ query, variables });
@@ -91,9 +104,9 @@ class FakeGitHub {
       const d = this.discussions.get(variables.id);
       return { node: d ? { title: d.title, body: d.body, answer: d.answer ? { id: d.answer } : null } : null };
     }
-    if (query.includes("on Discussion { title body } }")) {
+    if (query.includes("on Discussion { title body author")) {
       const d = this.discussions.get(variables.id);
-      return { node: d ? { title: d.title, body: d.body } : null };
+      return { node: d ? { title: d.title, body: d.body, author: this.shown(d.author) } : null };
     }
     if (query.includes("comments(first: 100, after: $after)")) {
       const d = this.discussions.get(variables.id);
@@ -102,7 +115,7 @@ class FakeGitHub {
       const nodes = slice.map((id) => {
         const c = this.comments.get(id);
         const first = this.page(c.replyIds, null);
-        return { id, author: { login: c.author }, createdAt: c.createdAt, body: c.body, replies: { pageInfo: first.pageInfo, nodes: this.replyNodes(first.slice) } };
+        return { id, author: this.shown(c.author), createdAt: c.createdAt, body: c.body, replies: { pageInfo: first.pageInfo, nodes: this.replyNodes(first.slice) } };
       });
       return { node: { comments: { pageInfo, nodes } } };
     }
@@ -121,16 +134,16 @@ class FakeGitHub {
       if (this.discussionsRefused) throw new Error("GitHub answered 502");
       const all = [...this.discussions.values()].sort((a, b) => b.createdAt - a.createdAt);
       const { slice, pageInfo } = this.page(all, variables.after);
-      return { repository: { discussions: { pageInfo, nodes: slice.map((d) => ({ id: d.id, title: d.title, body: d.body })) } } };
+      return { repository: { discussions: { pageInfo, nodes: slice.map((d) => ({ id: d.id, title: d.title, body: d.body, author: this.shown(d.author) })) } } };
     }
     if (mutation === "createDiscussion") {
       assert.ok(variables.body.length <= LIMIT, `a new discussion of ${variables.body.length} characters`);
-      return { createDiscussion: { discussion: { id: this.discussion(variables.title, variables.body), number: 2 } } };
+      return { createDiscussion: { discussion: { id: this.discussion(variables.title, variables.body, [], null, BOT), number: 2 } } };
     }
     if (mutation === "addDiscussionComment") {
       assert.ok(variables.body.length <= LIMIT, `a new reply of ${variables.body.length} characters`);
       if (!this.discussions.has(variables.d)) throw new Error("GitHub answered NOT_FOUND");
-      return { addDiscussionComment: { comment: { id: this.addComment(variables.d, variables.r, variables.body) } } };
+      return { addDiscussionComment: { comment: { id: this.addComment(variables.d, variables.r, variables.body, BOT) } } };
     }
     if (mutation === "deleteDiscussion") {
       const d = this.discussions.get(variables.id);
@@ -173,7 +186,9 @@ function assertOneWholeCopy(gh, originalId, texts) {
   const copies = gh.copiesOf(originalId);
   assert.equal(copies.length, 1, "one copy");
   const copy = copies[0];
-  const marks = [copy.body, ...copy.commentIds.map((c) => gh.comments.get(c).body)].map((b) => /part (\d+)\/(\d+)/.exec(b)).filter(Boolean);
+  // The workflow's own parts only: anyone's lookalike in the copy is no part.
+  const own = copy.commentIds.map((c) => gh.comments.get(c)).filter((c) => c.author === BOT).map((c) => c.body);
+  const marks = [copy.body, ...own].map((b) => /part (\d+)\/(\d+)/.exec(b)).filter(Boolean);
   const numbers = marks.map((m) => Number(m[1])).sort((a, b) => a - b);
   assert.deepEqual(numbers, Array.from({ length: Number(marks[0][2]) }, (_, i) => i + 1), "each part once");
   const all = gh.textsOf(copy.id);
@@ -182,7 +197,7 @@ function assertOneWholeCopy(gh, originalId, texts) {
   return all;
 }
 
-test("PUB-001: a discussion of 101 replies, one of them with 101 of its own, is carried over whole, the answer marked", async () => {
+test("a discussion of 101 replies, one of them with 101 of its own, is carried over whole, the answer marked", async () => {
   const gh = new FakeGitHub();
   const comments = Array.from({ length: 101 }, (_, i) => ({ body: `comment number ${i}`, author: `u${i}` }));
   const id = gh.discussion("Help", `my link ${LINK}`, comments, 100);
@@ -194,7 +209,7 @@ test("PUB-001: a discussion of 101 replies, one of them with 101 of its own, is 
   assert.match(all, /\*\*@u100\*\*, 2026-11-05 \(marked as the answer\)/);
 });
 
-test("PUB-001: a page that cannot be read posts nothing and deletes nothing", async () => {
+test("a page that cannot be read posts nothing and deletes nothing", async () => {
   const gh = new FakeGitHub();
   const id = gh.discussion("Help", `my link ${LINK}`, Array.from({ length: 150 }, (_, i) => ({ body: `c${i}`, author: "u" })));
   const read = gh.graphql;
@@ -207,7 +222,7 @@ test("PUB-001: a page that cannot be read posts nothing and deletes nothing", as
   assert.ok(gh.discussions.has(id));
 });
 
-test("PUB-002: a discussion cleaned by its author while the run waited is left alone; one still holding it is posted as it is now", async () => {
+test("a discussion cleaned by its author while the run waited is left alone; one still holding it is posted as it is now", async () => {
   const gh = new FakeGitHub();
   const id = gh.discussion("Help", `my link ${LINK}`);
   const event = discussionEvent(gh, id);
@@ -372,4 +387,98 @@ test("run again after it worked, or for a reply whose discussion another run too
   assert.equal(await runGuard(event, gh.graphql, quiet), "gone");
   assert.equal(await runGuard(orphan, gh.graphql, quiet), "gone");
   assert.equal(count(gh, "createDiscussion") + count(gh, "addDiscussionComment"), posts);
+});
+
+/** The same discussion built twice gets the same ids: a twin shows what the workflow's copy of it says, exactly. */
+function longTalk() {
+  return Array.from({ length: 60 }, (_, i) => ({ body: `reply ${i}\n${"words ".repeat(400)}`, author: `u${i}` }));
+}
+
+test("an outsider's discussion with this post's marker, print and exact text is never taken for its copy, nor deleted", async () => {
+  // What the workflow's copy would say, from a twin whose delete was refused.
+  const twin = new FakeGitHub();
+  const twinId = twin.discussion("Help", `my link ${LINK}`, [{ body: "the fix", author: "helper" }]);
+  twin.fail("deleteDiscussion", 1, (v) => v.id === twinId);
+  await assert.rejects(runGuard(discussionEvent(twin, twinId), twin.graphql, quiet), /502/);
+  const genuine = twin.copiesOf(twinId)[0];
+
+  const gh = new FakeGitHub();
+  const id = gh.discussion("Help", `my link ${LINK}`, [{ body: "the fix", author: "helper" }]);
+  assert.equal(id, twinId);
+  // An outsider posts that very copy (marker, print, title and text), and an older-looking one beside it.
+  const exact = gh.discussion(genuine.title, genuine.body, [], null, "outsider");
+  const older = gh.discussion(genuine.title, genuine.body.replace(/snapshot [0-9a-f]+/, "snapshot 0000000000000000"), [], null, "outsider");
+  assert.equal(await runGuard(discussionEvent(gh, id), gh.graphql, quiet), "removed");
+  assert.ok(gh.discussions.has(exact) && gh.discussions.has(older), "the outsider's posts are left alone");
+  assert.equal(gh.discussions.get(exact).body, genuine.body);
+  assert.equal(count(gh, "createDiscussion"), 1, "the workflow made its own copy");
+  assert.equal(gh.discussions.has(id), false);
+  assertOneWholeCopy(gh, id, ["the fix"]);
+});
+
+test("an outsider's reply carrying a part's marker and exact text inside the workflow's copy is not counted as that part, nor removed", async () => {
+  // The exact third part, from a twin that copied the discussion whole.
+  const twin = new FakeGitHub();
+  const twinId = twin.discussion("Help", `my link ${LINK}`, longTalk());
+  assert.equal(await runGuard(discussionEvent(twin, twinId), twin.graphql, quiet), "removed");
+  const third = twin.copiesOf(twinId)[0].commentIds.map((c) => twin.comments.get(c).body).find((b) => b.includes(" part 3/"));
+  assert.ok(third);
+
+  const gh = new FakeGitHub();
+  const id = gh.discussion("Help", `my link ${LINK}`, longTalk());
+  gh.fail("addDiscussionComment", 1, (v) => v.body.includes(" part 3/"));
+  await assert.rejects(runGuard(discussionEvent(gh, id), gh.graphql, quiet), /502/);
+  // While the copy waits for its third part, an outsider posts exactly that part into it.
+  const copy = gh.copiesOf(id)[0];
+  const fake = gh.addComment(copy.id, null, third, "outsider");
+  assert.equal(await runGuard(discussionEvent(gh, id), gh.graphql, quiet), "removed");
+  assert.ok(gh.comments.has(fake), "the outsider's reply stays");
+  assert.equal(gh.comments.get(fake).author.login, "outsider");
+  assertOneWholeCopy(gh, id, longTalk().map((r) => r.body));
+});
+
+test("an outsider's reply with a reply's marker and exact text is not taken for its copy: the workflow posts its own, and leaves theirs", async () => {
+  const build = () => {
+    const g = new FakeGitHub();
+    const d = g.discussion("Help", "a question");
+    const parent = g.addComment(d, null, "an answer", "helper");
+    const reply = g.addComment(d, parent, `here ${LINK} and one more thing`, "replier");
+    return { g, d, parent, reply };
+  };
+  const twin = build();
+  twin.g.fail("deleteDiscussionComment", 1, (v) => v.id === twin.reply);
+  await assert.rejects(runGuard(replyEvent(twin.g, twin.d, twin.reply), twin.g.graphql, quiet), /502/);
+  const genuine = twin.g.comments.get(twin.g.comments.get(twin.parent).replyIds.find((r) => r !== twin.reply)).body;
+
+  const { g, d, parent, reply } = build();
+  const fake = g.addComment(d, parent, genuine, "outsider");
+  assert.equal(await runGuard(replyEvent(g, d, reply), g.graphql, quiet), "removed");
+  assert.equal(count(g, "addDiscussionComment"), 1, "the workflow posted its own copy");
+  assert.ok(g.comments.has(fake), "the outsider's reply stays");
+  const under = g.comments.get(parent).replyIds.map((r) => g.comments.get(r));
+  assert.equal(under.filter((c) => c.author === BOT).length, 1);
+  assert.equal(g.comments.has(reply), false);
+});
+
+test("when GitHub gives no author, nothing is taken for the workflow's: the original stays; with authors back, the copy is finished, not made twice", async () => {
+  // No replies, so the copy says the same whether or not GitHub names who wrote them.
+  const gh = new FakeGitHub();
+  const id = gh.discussion("Help", `my link ${LINK}\nthe details`);
+  gh.hideAuthors = true;
+  await assert.rejects(runGuard(discussionEvent(gh, id), gh.graphql, quiet), (error) => error instanceof GuardStop && /posted by this workflow/.test(error.message));
+  assert.ok(gh.discussions.has(id), "the original stays");
+  assert.equal(count(gh, "deleteDiscussion"), 0);
+  gh.hideAuthors = false;
+  assert.equal(await runGuard(discussionEvent(gh, id), gh.graphql, quiet), "removed");
+  assert.equal(count(gh, "createDiscussion"), 1, "the workflow's own copy was found and finished");
+  assertOneWholeCopy(gh, id, ["the details"]);
+  // With replies whose authors could not be named, the copy made then (naming them "ghost") is of another version:
+  // once names are back it is replaced, and one copy remains.
+  const named = new FakeGitHub();
+  const n = named.discussion("Help", `my link ${LINK}`, [{ body: "the fix", author: "helper" }]);
+  named.hideAuthors = true;
+  await assert.rejects(runGuard(discussionEvent(named, n), named.graphql, quiet), GuardStop);
+  named.hideAuthors = false;
+  assert.equal(await runGuard(discussionEvent(named, n), named.graphql, quiet), "removed");
+  assert.match(assertOneWholeCopy(named, n, ["the fix"]), /\*\*@helper\*\*/);
 });

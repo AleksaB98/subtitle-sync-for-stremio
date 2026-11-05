@@ -36,6 +36,24 @@ function markerIn(body, id) {
   return found ? { part: Number(found[1]), parts: Number(found[2]), print: found[3] } : null;
 }
 
+/** Who wrote a post, as every query here asks it: what tells this workflow's own posts from anyone else's. */
+const AUTHOR = "author { __typename login ... on Bot { databaseId } }";
+
+/**
+ * Whether a post was written by this workflow: its token (GITHUB_TOKEN, an installation token of GitHub's Actions
+ * app) posts as the bot "github-actions", user id 41898282 (seen on this repository's discussion #12, posted by this
+ * guard on 2026-10-23: author Bot, login github-actions, databaseId 41898282). A person's account is never a Bot,
+ * and the app's name is GitHub's own. An author missing or not given is not this workflow.
+ */
+export const ours = (author) => author?.__typename === "Bot" && author.login === "github-actions" && author.databaseId === 41898282;
+
+/**
+ * The marker of a post, only when this workflow wrote it: a marker, a print and the exact text can all be copied by
+ * anyone (the post they stand for is public), so a post by anyone else is never taken for a copy or a part of one,
+ * never counted, and never deleted as an older copy.
+ */
+const ourMark = (post, id) => (ours(post?.author) ? markerIn(post.body, id) : null);
+
 const printOf = (title, parts) => createHash("sha256").update([title, ...parts].join("\u0000")).digest("hex").slice(0, 16);
 
 /** A reply's replies past its first 100, page by page. */
@@ -45,7 +63,7 @@ async function moreReplies(graphql, commentId, first) {
   while (more.hasNextPage) {
     const { node } = await graphql(
       `query($id: ID!, $after: String) { node(id: $id) { ... on DiscussionComment {
-            replies(first: 100, after: $after) { pageInfo { hasNextPage endCursor } nodes { id author { login } createdAt body } }
+            replies(first: 100, after: $after) { pageInfo { hasNextPage endCursor } nodes { id ${AUTHOR} createdAt body } }
           } } }`,
       { id: commentId, after: more.endCursor },
     );
@@ -68,7 +86,7 @@ async function allComments(graphql, discussionId) {
       `query($id: ID!, $after: String) { node(id: $id) { ... on Discussion {
         comments(first: 100, after: $after) {
           pageInfo { hasNextPage endCursor }
-          nodes { id author { login } createdAt body replies(first: 100) { pageInfo { hasNextPage endCursor } nodes { id author { login } createdAt body } } }
+          nodes { id ${AUTHOR} createdAt body replies(first: 100) { pageInfo { hasNextPage endCursor } nodes { id ${AUTHOR} createdAt body } } }
         }
       } } }`,
       { id: discussionId, after },
@@ -189,7 +207,7 @@ const deleteComment = (graphql, id) => graphql("mutation($id: ID!) { deleteDiscu
 async function replySnapshot(graphql, comment) {
   const { node } = await graphql(
     `query($id: ID!) { node(id: $id) { ... on DiscussionComment { body replyTo { id }
-      replies(first: 100) { pageInfo { hasNextPage endCursor } nodes { id author { login } createdAt body } } } } }`,
+      replies(first: 100) { pageInfo { hasNextPage endCursor } nodes { id ${AUTHOR} createdAt body } } } } }`,
     { id: comment.node_id },
   );
   if (!node) return undefined;
@@ -215,14 +233,15 @@ async function replyRound(event, graphql, log) {
   }
   const { parent, found, parts, print } = now;
   const id = comment.node_id;
-  // The parts an earlier run made, by their markers: current ones are kept, older ones replaced.
+  // The parts an earlier run of this workflow made, by their markers: current ones are kept, older ones replaced.
+  // Anyone else's post with a marker is no part (ourMark): never counted, never deleted.
   const scan = async () => {
     const current = new Map();
     let doubled = 0;
     const stale = [];
     for (const c of await allComments(graphql, discussion.node_id)) {
       for (const one of [c, ...c.replies]) {
-        const mark = markerIn(one.body, id);
+        const mark = ourMark(one, id);
         if (!mark) continue;
         if (mark.print === print && mark.parts === parts.length) {
           if (current.has(mark.part)) doubled++;
@@ -234,7 +253,7 @@ async function replyRound(event, graphql, log) {
   };
   const { current, stale } = await scan();
   for (const old of stale) {
-    if (old.replies.some((r) => !markerIn(r.body, id))) {
+    if (old.replies.some((r) => !ourMark(r, id))) {
       throw new GuardStop("an older copy of the reply has replies of its own: both left where they are, for the owner");
     }
   }
@@ -289,13 +308,14 @@ async function earlierCopy(graphql, event, id) {
   for (let page = 1; page <= lookupPages(); page++) {
     const { repository } = await graphql(
       `query($owner: String!, $name: String!, $after: String) { repository(owner: $owner, name: $name) {
-        discussions(first: 100, after: $after, orderBy: { field: CREATED_AT, direction: DESC }) { pageInfo { hasNextPage endCursor } nodes { id title body } }
+        discussions(first: 100, after: $after, orderBy: { field: CREATED_AT, direction: DESC }) { pageInfo { hasNextPage endCursor } nodes { id title body ${AUTHOR} } }
       } }`,
       { owner: event.repository.owner.login, name: event.repository.name, after },
     );
     const list = repository?.discussions;
     if (!list) throw new GuardStop("the discussions could not be read to look for an earlier copy: left where it is");
-    const copy = list.nodes.find((d) => markerIn(d.body, id)?.part === 1);
+    // Only one this workflow posted: anyone can post a discussion with the same marker, print and text.
+    const copy = list.nodes.find((d) => ourMark(d, id)?.part === 1);
     if (copy) return copy;
     if (!list.pageInfo.hasNextPage) return null;
     after = list.pageInfo.endCursor;
@@ -322,12 +342,14 @@ async function discussionRound(event, graphql, log) {
   let copy = await earlierCopy(graphql, event, id);
   let made = new Map();
   if (copy) {
-    const first = markerIn(copy.body, id);
+    const first = ourMark(copy, id);
     const comments = await allComments(graphql, copy.id);
-    const others = comments.flatMap((c) => [c, ...c.replies]).filter((c) => !markerIn(c.body, id));
+    // Anyone else's post in the copy (a marker in it or not) is theirs: it is never counted as a part, and an older
+    // copy holding one is never deleted.
+    const others = comments.flatMap((c) => [c, ...c.replies]).filter((c) => !ourMark(c, id));
     if (first.print === print && first.parts === parts.length && copy.title === title) {
       for (const c of comments) {
-        const mark = markerIn(c.body, id);
+        const mark = ourMark(c, id);
         if (mark && mark.print === print) made.set(mark.part, c.body);
       }
     } else if (others.length > 0) {
@@ -352,13 +374,17 @@ async function discussionRound(event, graphql, log) {
   }
 
   // Read back: the copy's title and every part exactly as the post says now, each once; and the post unchanged.
-  const { node: back } = await graphql("query($id: ID!) { node(id: $id) { ... on Discussion { title body } } }", { id: copy.id });
-  if (back?.title !== title || back?.body !== posted(parts[0], id, 1, parts.length, print)) {
+  // The copy must read back as this workflow's own: an author that cannot be told stops the run, the original left.
+  const { node: back } = await graphql(`query($id: ID!) { node(id: $id) { ... on Discussion { title body ${AUTHOR} } } }`, { id: copy.id });
+  if (!ours(back?.author)) {
+    throw new GuardStop("the copy could not be read back as posted by this workflow: the discussion is left where it is");
+  }
+  if (back.title !== title || back.body !== posted(parts[0], id, 1, parts.length, print)) {
     throw new GuardStop("the copy's first part could not be read back as posted: the discussion is left where it is");
   }
   const seen = new Map();
   for (const c of await allComments(graphql, copy.id)) {
-    const mark = markerIn(c.body, id);
+    const mark = ourMark(c, id);
     if (mark) seen.set(mark.part, [...(seen.get(mark.part) ?? []), c.body]);
   }
   for (let part = 2; part <= parts.length; part++) {
