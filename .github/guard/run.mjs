@@ -30,11 +30,28 @@ export class GuardStop extends Error {
  */
 const markerOf = (id, part, parts, print) => `<!-- guard:replaces ${id} part ${part}/${parts} snapshot ${print} -->`;
 
-/** What a body's marker says about the post standing for `id`: its part, the number of parts, the print; or null. */
+/** The marker as posted() writes it, alone at the very end of a post. */
+const TRAILING_MARKER = /\n\n<!-- guard:replaces (\S+) part (\d+)\/(\d+) snapshot ([0-9a-f]{16}) -->$/;
+
+/**
+ * What a body's marker says about the post standing for `id`: its part, the number of parts, the print; or null.
+ * Only the marker that ends the body counts, the one posted() writes last. A marker anywhere else is text someone
+ * typed, carried in a quote or the post's own words: it never stands for anything, even when the body has no marker
+ * of its own at the end (copies made before carried text was defused hold such text too). The id is compared as
+ * it is, never put into a pattern.
+ */
 function markerIn(body, id) {
-  const found = new RegExp(`<!-- guard:replaces ${id} part (\\d+)/(\\d+) snapshot ([0-9a-f]+) -->`).exec(body ?? "");
-  return found ? { part: Number(found[1]), parts: Number(found[2]), print: found[3] } : null;
+  const found = TRAILING_MARKER.exec(String(body ?? "").replace(/\s+$/, ""));
+  if (!found || found[1] !== id) return null;
+  return { part: Number(found[2]), parts: Number(found[3]), print: found[4] };
 }
+
+/**
+ * Carried text with any marker-like words made plain: a zero-width space after "guard" in every "guard:replaces", so
+ * nothing anyone typed reads as a marker in the workflow's copy. It reads the same, and inside an HTML comment it
+ * stays hidden. Applied after the links and keys are removed, before the copy is cut into parts and printed.
+ */
+const defused = (text) => text.replace(/(guard)(:replaces)/gi, "$1​$2");
 
 /** Who wrote a post, as every query here asks it: what tells this workflow's own posts from anyone else's. */
 const AUTHOR = "author { __typename login ... on Bot { databaseId } }";
@@ -50,7 +67,8 @@ export const ours = (author) => author?.__typename === "Bot" && author.login ===
 /**
  * The marker of a post, only when this workflow wrote it: a marker, a print and the exact text can all be copied by
  * anyone (the post they stand for is public), so a post by anyone else is never taken for a copy or a part of one,
- * never counted, and never deleted as an older copy.
+ * never counted, and never deleted as an older copy. In the workflow's own post only its last marker counts
+ * (markerIn): one typed by someone and carried in it never makes it pass for another post's copy.
  */
 const ourMark = (post, id) => (ours(post?.author) ? markerIn(post.body, id) : null);
 
@@ -101,7 +119,7 @@ async function allComments(graphql, discussionId) {
 
 /** A reply quoted with its author and day, the marked answer said so; cleaned of any link or key of its own. */
 function quote(c, answer) {
-  const text = cleaned(c.body, findSecrets(c.body)).split("\n").map((line) => `> ${line}`).join("\n");
+  const text = defused(cleaned(c.body, findSecrets(c.body))).split("\n").map((line) => `> ${line}`).join("\n");
   return `**@${c.author?.login ?? "ghost"}**, ${c.createdAt.slice(0, 10)}${answer ? " (marked as the answer)" : ""}:\n${text}`;
 }
 
@@ -216,7 +234,7 @@ async function replySnapshot(graphql, comment) {
   // A reply with replies of its own: theirs are carried along too. Whether GitHub keeps them once their parent is
   // deleted is not known here; carried, they are never lost (at worst they show twice).
   const answers = await moreReplies(graphql, comment.node_id, node.replies ?? { nodes: [], pageInfo: { hasNextPage: false } });
-  const parts = partsOf(`${noteFor(comment.user.login, found)}\n\n---\n\n${cleaned(node.body, found)}`, answers.map((r) => quote(r, false)));
+  const parts = partsOf(`${noteFor(comment.user.login, found)}\n\n---\n\n${defused(cleaned(node.body, found))}`, answers.map((r) => quote(r, false)));
   return { parent: node.replyTo?.id ?? null, found, parts, print: printOf("", parts) };
 }
 
@@ -293,7 +311,7 @@ async function discussionSnapshot(graphql, discussion) {
   if (found.length === 0) return null;
   const comments = await allComments(graphql, discussion.node_id);
   const quotes = comments.flatMap((c) => [quote(c, c.id === node.answer?.id), ...c.replies.map((r) => quote(r, false))]);
-  const parts = partsOf(`${noteFor(discussion.user.login, found)}\n\n---\n\n${cleaned(node.body, found)}`, quotes);
+  const parts = partsOf(`${noteFor(discussion.user.login, found)}\n\n---\n\n${defused(cleaned(node.body, found))}`, quotes);
   const title = cleaned(node.title, found);
   return { title, found, parts, replies: comments.length, print: printOf(title, parts) };
 }

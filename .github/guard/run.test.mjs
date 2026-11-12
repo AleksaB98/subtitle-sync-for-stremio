@@ -482,3 +482,65 @@ test("when GitHub gives no author, nothing is taken for the workflow's: the orig
   assert.equal(await runGuard(discussionEvent(named, n), named.graphql, quiet), "removed");
   assert.match(assertOneWholeCopy(named, n, ["the fix"]), /\*\*@helper\*\*/);
 });
+
+// A marker anyone types is only text: quoted into the workflow's copy of another post, it never makes that copy pass
+// for this post's copy. Only the marker the workflow writes last in its own post counts.
+const typedMarker = (id) => `thanks <!-- guard:replaces ${id} part 1/1 snapshot 0000000000000000 -->`;
+const FIX = "the fix that worked: set the cache to 64 MB";
+const wordsAnywhere = (gh, text) => [...gh.discussions.keys()].some((id) => gh.textsOf(id).includes(text));
+
+test("a discussion's copy quoting a marker typed for another discussion is never taken for that one's copy, nor deleted", async () => {
+  const gh = new FakeGitHub();
+  const other = gh.discussion("Other", `mine ${LINK}`, [], null, "mallory");
+  const id = gh.discussion("Help", `my link ${LINK}`, [{ body: FIX, author: "helper" }, { body: typedMarker(other), author: "mallory" }]);
+  assert.equal(await runGuard(discussionEvent(gh, id), gh.graphql, quiet), "removed");
+  const copy = gh.copiesOf(id)[0].id;
+  assert.equal(await runGuard(discussionEvent(gh, other), gh.graphql, quiet), "removed");
+  assert.ok(gh.discussions.has(copy), "the first discussion's copy stays");
+  assert.ok(wordsAnywhere(gh, FIX), "the helper's words are still there");
+  assertOneWholeCopy(gh, id, [FIX]);
+  assert.equal(gh.discussions.has(other), false);
+  assert.equal(gh.copiesOf(other).filter((d) => d.id !== copy).length, 1, "the other discussion got its own copy");
+});
+
+test("a reply's copy quoting a marker typed for another reply is never taken for an older part of it, nor deleted", async () => {
+  const gh = new FakeGitHub();
+  const id = gh.discussion("Help", "a question");
+  const first = gh.addComment(id, null, `mine ${LINK}`, "mallory");
+  const second = gh.addComment(id, null, `see ${LINK}`, "replier");
+  gh.addComment(id, second, FIX, "helper");
+  gh.addComment(id, second, typedMarker(first), "mallory");
+  assert.equal(await runGuard(replyEvent(gh, id, second), gh.graphql, quiet), "removed");
+  const copy = gh.discussions.get(id).commentIds.find((c) => gh.comments.get(c).author === BOT);
+  assert.ok(gh.comments.get(copy).body.includes(FIX));
+  assert.equal(await runGuard(replyEvent(gh, id, first), gh.graphql, quiet), "removed");
+  assert.ok(gh.comments.has(copy), "the second reply's copy stays");
+  assert.ok(gh.textsOf(id).includes(FIX), "the helper's words are still there");
+  assert.equal(gh.comments.has(first), false);
+});
+
+test("a copy made by the previous version, with a typed marker quoted in it, is known only by its own last marker", async () => {
+  const gh = new FakeGitHub();
+  const other = gh.discussion("Other", `mine ${LINK}`, [], null, "mallory");
+  const id = gh.discussion("Help", `my link ${LINK}`, [{ body: FIX, author: "helper" }, { body: typedMarker(other), author: "mallory" }]);
+  // As the previous version posted it, its run stopped before the delete: the typed marker quoted as it was.
+  const old = gh.discussion("Help", `note\n\n---\n\nmy link [link removed]\n\n---\n\n**The replies it had:**\n\n**@helper**, 2026-11-05:\n> ${FIX}\n\n**@mallory**, 2026-11-05:\n> ${typedMarker(other)}\n\n<!-- guard:replaces ${id} part 1/1 snapshot 1111111111111111 -->`, [], null, BOT);
+  assert.equal(await runGuard(discussionEvent(gh, other), gh.graphql, quiet), "removed");
+  assert.ok(gh.discussions.has(old), "not taken for the other discussion's copy");
+  // The discussion it stands for, guarded again: found by its own marker, of an older version, so replaced; one copy.
+  assert.equal(await runGuard(discussionEvent(gh, id), gh.graphql, quiet), "removed");
+  assert.equal(gh.discussions.has(old), false);
+  assert.equal(gh.discussions.has(id), false);
+  assertOneWholeCopy(gh, id, [FIX]);
+});
+
+test("a marker-like text carried into a copy keeps its words, loses its meaning, and links are still removed", async () => {
+  const gh = new FakeGitHub();
+  const id = gh.discussion("Help", `my link ${LINK}\nGUARD:REPLACES is just words here`, [{ body: `${typedMarker("D99")} and the rest of my words ${LINK}`, author: "helper" }]);
+  assert.equal(await runGuard(discussionEvent(gh, id), gh.graphql, quiet), "removed");
+  const all = assertOneWholeCopy(gh, id, []);
+  assert.equal(all.match(/guard:replaces/gi).length, 1, "the copy's own marker is the only one");
+  assert.match(all, /and the rest of my words \[link removed\]/);
+  assert.match(all, /is just words here/);
+  assert.equal(all.replace(/​/g, "").match(/guard:replaces/gi).length, 3, "the typed ones are all still there to read");
+});
