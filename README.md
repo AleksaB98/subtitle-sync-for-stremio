@@ -85,7 +85,7 @@ your video, all of them are still shown, so you can try another by eye.
   video at all and the video file has a subtitle track of its own, that track is translated instead, timed to the video
   (with TorBox: your TorBox key or stream addon link).
 - It cannot re-time a subtitle when there is nothing to compare it with; the menu then says so.
-- It cannot help in an app that tells subtitle addons nothing about the video file (no name, size or fingerprint). Stremio sends them on every device and Nuvio’s Android TV app sends the fingerprint (its phone app sends nothing, its LG TV app often nothing); in an app that sends nothing, every subtitle comes untimed and the list says so. Only that app's developers can change it. Details: [which apps get synced subtitles](https://subtitlesync.stream/stremio-apps-synced-subtitles).
+- It cannot help in an app that tells subtitle addons nothing about the video file (no name, size or fingerprint). Stremio sends them on every device and Nuvio’s Android TV app sends the fingerprint (its phone app sends the file’s name, and often the fingerprint, since version 0.6.7; its LG TV app often sends nothing); in an app that sends nothing, every subtitle comes untimed and the list says so. Only that app's developers can change it. Details: [which apps get synced subtitles](https://subtitlesync.stream/stremio-apps-synced-subtitles).
 
 ## Setting it up
 
