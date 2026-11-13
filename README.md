@@ -79,7 +79,7 @@ your video, all of them are still shown, so you can try another by eye.
 - It needs your own free OpenSubtitles account (an API key and your login).
 - There is nothing to host or install on a computer: you add one link to Stremio.
 - It does not write subtitles of its own: it finds ones people wrote in your language and fixes their timing.
-  Only when none exists in any of your languages, it also offers one translated by machine into your first language from another language (a very close language or the film's original
+  Only when none exists in your languages, it also offers one translated by machine into your first language (and, started only when you pick it, into each other language of yours that has none) from another language (a very close language or the film's original
   language first, it translates best, else English): made once with somebody's own free Gemini key or DeepL key (opt-in, on
   step 2 of the setup page), then kept for everyone with the same subtitle. When no site has any subtitle for the
   video at all and the video file has a subtitle track of its own, that track is translated instead, timed to the video
