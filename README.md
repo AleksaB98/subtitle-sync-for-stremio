@@ -7,7 +7,7 @@ playing, using the video's own subtitle track when it can. It is a free Stremio 
 from OpenSubtitles, and from Titlovi.com, SubDL, SubSource, Subs.ro, AltyaziDB, Jimaku and TheSubtitleDB if you add them, and are lined
 up before the subtitle menu opens. The one that lines up goes on top of the menu. When no subtitle exists in
 any of your languages, it translates one with AI, free with your own Google Gemini key (no card) or with your
-own DeepL key, timed the same way and kept for everyone: [free AI subtitles for Stremio](https://subtitlesync.stream/stremio-ai-subtitles).
+own DeepL or OpenRouter key, timed the same way and kept for everyone: [free AI subtitles for Stremio](https://subtitlesync.stream/stremio-ai-subtitles).
 
 **Set it up: https://subtitlesync.stream** (English) · **https://subtitlesync.stream/sr/** (srpski) · **https://subtitlesync.stream/pt-br/** (português)
 
@@ -24,7 +24,7 @@ own DeepL key, timed the same way and kept for everyone: [free AI subtitles for 
 > **Em português:** o Subtitle Sync para Stremio encontra legendas no seu idioma e as sincroniza com o
 > arquivo exato que você está assistindo, usando a legenda embutida no próprio vídeo quando possível.
 > Legenda atrasada ou adiantada? Veja [por que acontece e como sincronizar](https://subtitlesync.stream/pt-br/legenda-atrasada-stremio).
-> Sem legenda em português? Ele traduz uma com IA, grátis, com a sua própria chave do Gemini (ou com o DeepL):
+> Sem legenda em português? Ele traduz uma com IA, grátis, com a sua própria chave do Gemini (ou com o DeepL ou o OpenRouter):
 > [legendas traduzidas com IA](https://subtitlesync.stream/pt-br/legendas-traduzidas-com-ia).
 
 ![Subtitle Sync for Stremio](pictures/preview-en.png)
@@ -49,8 +49,8 @@ More: [Stremio subtitles out of sync? Why it happens and how to fix it](https://
 3. Compares each subtitle's dialogue with it and re-times it: a fixed gap, a different speed,
    or a different cut.
 4. Shows in Stremio's subtitle menu how each subtitle was timed, so you know what you pick.
-5. When none of your languages has a subtitle, translates one with AI (Google Gemini with your own free key, or
-   DeepL with your own key, or both in the order you choose) from
+5. When none of your languages has a subtitle, translates one with AI (Google Gemini with your own free key,
+   DeepL or OpenRouter with your own key, or several in the order you choose) from
    the subtitle that translates best: one made for your file, a nearly identical language, the film's original
    language, then English. More: [free AI subtitles for Stremio](https://subtitlesync.stream/stremio-ai-subtitles)
    ([srpski](https://subtitlesync.stream/sr/prevod-titlova-na-srpski), [português](https://subtitlesync.stream/pt-br/legendas-traduzidas-com-ia)).
@@ -95,8 +95,9 @@ Setup takes 5 to 15 minutes on a guided page, in English, Serbian or Portuguese 
 2. Add your OpenSubtitles account: its API key, username and password (required, free).
    Optionally add Titlovi.com (paid: a yearly supporter donation to Titlovi.com), SubDL,
    SubSource, TheSubtitleDB or, for Romanian, Subs.ro, for Turkish, AltyaziDB and, for Japanese, Jimaku (free, each with its own key),
-   and a free Gemini key or a DeepL key (a new DeepL account gets 1,000,000 characters once, no card) for
-   machine translations; with both, choose which translates first.
+   and a free Gemini key, a DeepL key (a new DeepL account gets 1,000,000 characters once, no card) or an
+   OpenRouter key (any AI model; free ones 50 requests a day) for machine translations; with several, choose which
+   translates first.
 3. Say whether you use a debrid service (this answer is needed; the step says what each
    answer gets). With TorBox, paste your TorBox API key (the simplest way: the addon then
    finds your video in your own TorBox account, whichever stream addon you play from) or
