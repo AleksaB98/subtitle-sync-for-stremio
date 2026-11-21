@@ -31,6 +31,10 @@ const LONG_LINK = /(?:https?:\/\/|stremio:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,}\/[^\s
 // Gemini keys from Google AI Studio: "AIza…" (older) and "AQ.…" (made since 2026).
 const GEMINI = /\b(?:AIza[0-9A-Za-z_-]{35}|AQ\.[0-9A-Za-z_.-]{20,})/g;
 
+// OpenRouter keys: "sk-or-v1-" and 64 hexadecimal characters, the shape the setup page takes. Found before TOKEN,
+// whose hash rule would leave the hexadecimal part alone (the private support guard has had it since 2026-11-14).
+const OPENROUTER = /\bsk-or-[A-Za-z0-9-]{20,120}/g;
+
 // TorBox keys look like a UUID.
 const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
 
@@ -61,6 +65,7 @@ export function findSecrets(text) {
   for (const m of without().matchAll(PIRACY_LINK)) add("piracy", m[0]);
   for (const m of without().matchAll(REFERRAL)) add("referral", m[0]);
   for (const m of without().matchAll(LONG_LINK)) add("link", m[0]);
+  for (const m of without().matchAll(OPENROUTER)) add("key", m[0]);
   const rest = without();
   for (const m of rest.matchAll(GEMINI)) add("key", m[0]);
   for (const m of rest.matchAll(UUID)) add("key", m[0]);
