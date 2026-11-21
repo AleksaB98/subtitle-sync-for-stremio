@@ -103,3 +103,13 @@ test("a UUID beside a GitHub picture, or on another site, is still a key", () =>
   assert.deepEqual(found.map((f) => f.match), [torbox]);
   assert.deepEqual(findSecrets(`https://example.com/user-attachments/assets/${torbox}`).map((f) => f.kind), ["key"]);
 });
+
+test("an OpenRouter key is found, though its tail alone reads like a hash; a real hash stays", () => {
+  // Made up: "sk-or-v1-" and 64 hexadecimal characters, the shape the setup page takes.
+  const openrouter = "sk-or-v1-" + "0123456789abcdef".repeat(4);
+  const text = `my translator key ${openrouter} stopped, commit 3399008c1f0a3b4e5d6c7b8a9f0e1d2c3b4a5f6e is the build`;
+  const found = findSecrets(text);
+  assert.deepEqual(found, [{ kind: "key", match: openrouter }]);
+  const out = cleaned(text, found);
+  assert.equal(out, "my translator key [key removed] stopped, commit 3399008c1f0a3b4e5d6c7b8a9f0e1d2c3b4a5f6e is the build");
+});

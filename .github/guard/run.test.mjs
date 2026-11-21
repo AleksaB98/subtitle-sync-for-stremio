@@ -544,3 +544,19 @@ test("a marker-like text carried into a copy keeps its words, loses its meaning,
   assert.match(all, /is just words here/);
   assert.equal(all.replace(/​/g, "").match(/guard:replaces/gi).length, 3, "the typed ones are all still there to read");
 });
+
+test("an OpenRouter key in a discussion or a reply is removed, the rest of the words carried", async () => {
+  const openrouter = "sk-or-v1-" + "fedcba9876543210".repeat(4);
+  const gh = new FakeGitHub();
+  const id = gh.discussion("Translation stops", `it says used up, key ${openrouter}, any idea?`);
+  assert.equal(await runGuard(discussionEvent(gh, id), gh.graphql, quiet), "removed");
+  const copy = gh.copiesOf(id)[0];
+  assert.ok(copy, "a copy was posted");
+  assert.match(copy.body, /it says used up, key \[key removed\], any idea\?/);
+  assert.doesNotMatch(gh.textsOf(copy.id), /sk-or-/);
+  const other = gh.discussion("Help", "a question");
+  const reply = gh.addComment(other, null, `mine is ${openrouter} too`, "replier");
+  assert.equal(await runGuard(replyEvent(gh, other, reply), gh.graphql, quiet), "removed");
+  assert.match(gh.textsOf(other), /mine is \[key removed\] too/);
+  assert.doesNotMatch(gh.textsOf(other), /sk-or-/);
+});
